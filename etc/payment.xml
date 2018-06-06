@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<payment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Payment:etc/payment.xsd">
+    <methods>
+        <method name="ipagcc">
+            <allow_multiple_address>1</allow_multiple_address>
+        </method>
+        <method name="ipagboleto">
+            <allow_multiple_address>1</allow_multiple_address>
+        </method>
+    </methods>
+    <credit_cards>
+        <type id="amex" order="0">
+            <label>American Express</label>
+        </type>
+        <type id="visa" order="10">
+            <label>Visa</label>
+        </type>
+        <type id="mastercard" order="20">
+            <label>MasterCard</label>
+        </type>
+        <type id="diners" order="30">
+            <label>Diners</label>
+        </type>
+        <type id="discover" order="40">
+            <label>Discover</label>
+        </type>
+        <type id="jcb" order="50">
+            <label>JCB</label>
+        </type>
+        <type id="elo" order="60">
+            <label>Elo</label>
+        </type>
+        <type id="hipercard" order="70">
+            <label>HiperCard</label>
+        </type>
+    </credit_cards>
+</payment>

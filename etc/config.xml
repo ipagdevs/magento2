@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+    <default>
+        <payment>
+            <ipagbase>
+                <title>Config Ipag</title>
+                <model>Ipag\Payment\Model\Method\Cc</model>
+                <environment_mode>production</environment_mode>
+                <advanced>
+                    <title>Config Avançada</title>
+                    <type_cpf>address</type_cpf>
+                    <cpf_for_address>vat_id</cpf_for_address>
+                    <cpf_for_customer>taxvat</cpf_for_customer>
+                    <type_cnpj>use_cpf</type_cnpj>
+                    <cnpj_for_address>vat_id</cnpj_for_address>
+                    <cnpj_for_customer>taxvat</cnpj_for_customer>
+                    <type_name_company>address</type_name_company>
+                    <company_name_address>company</company_name_address>
+                    <company_name_customer>firstname</company_name_customer>
+                    <street_logradouro>0</street_logradouro>
+                    <street_number>1</street_number>
+                    <street_complemento>2</street_complemento>
+                    <street_district>3</street_district>
+                </advanced>
+            </ipagbase>
+            <ipagcc>
+                <model>Ipag\Payment\Model\Method\Cc</model>
+				<payment_action>authorize</payment_action>
+                <active>1</active>
+                <title>Cartão de Crédito</title>
+                <cctypes>amex,visa,mastercard,diners,discover,jcb,elo,hipercard</cctypes>
+                <useccv>1</useccv>
+                <cctypes_ipag_mapper><![CDATA[{"american-express":"AE","discover":"DI","jcb":"JCB","mastercard":"MC","master-card":"MC","visa":"VI","maestro":"MI","diners-club":"DN","unionpay":"CUP"}]]></cctypes_ipag_mapper>
+                <installment>
+                    <type_interest>simple</type_interest>
+                    <min_installment>5</min_installment>
+                    <max_installment>12</max_installment>
+                    <interest>0</interest>
+                    <additional_type>none</additional_type>
+                    <additional_amount>0</additional_amount>
+                </installment>
+            </ipagcc>
+            <ipagboleto>
+                <model>Ipag\Payment\Model\Method\Boleto</model>
+                <payment_action>authorize</payment_action>
+                <active>1</active>
+                <title>Boleto Bancário</title>
+                <expiration>3</expiration>
+                <instruction><![CDATA[
+                    Efetue o pagamento até o vencimento.
+                ]]></instruction>
+            </ipagboleto>
+        </payment>
+    </default>
+</config>

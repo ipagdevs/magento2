@@ -1,0 +1,213 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="ipagbase" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Ipag Base</label>
+                <field id="environment_mode" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Ambiente</label>
+                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\Environment</source_model>
+                    <comment>Para vendas reais use o ambiente de produção, para testes o de sandbox.</comment>
+                </field>
+                <field id="identification" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Identificação iPag</label>
+                </field>
+                <field id="apikey" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API-KEY</label>
+                </field>
+                <group id="advanced" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                	<label>Configurações Avançadas</label>
+                	<field id="type_cpf" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O CPF será um atributo</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeCPF</source_model>
+	                </field>
+	                <field id="cpf_for_address" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do CPF é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\AddressMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_cpf">address</field>
+	                    </depends>
+	                </field>
+	                <field id="cpf_for_customer" translate="label" type="select" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do CPF é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\CustomerMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_cpf">customer</field>
+	                    </depends>
+	                </field>
+	                <field id="type_cnpj" translate="label" type="select" sortOrder="13" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O CNPJ será</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeCNPJ</source_model>
+	                </field>
+	                <field id="cnpj_for_address" translate="label" type="select" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do CNPJ é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\AddressMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_cnpj">use_address</field>
+	                    </depends>
+	                </field>
+	                <field id="cnpj_for_customer" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do CNPJ é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\CustomerMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_cnpj">use_customer</field>
+	                    </depends>
+	                </field>
+	                <field id="type_name_company" translate="label" type="select" sortOrder="16" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O nome da empresa será</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeNameCompany</source_model>
+	                </field>
+	                <field id="company_name_address" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do Nome da Empresa é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\AddressMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_name_company">address</field>
+	                    </depends>
+	                </field>
+	                <field id="company_name_customer" translate="label" type="select" sortOrder="18" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>O atributo do Nome da Empresa é</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\AddressMap</source_model>
+	                    <depends>
+	                        <field id="*/*/*/type_name_company">customer</field>
+	                    </depends>
+	                </field>
+	                <field id="street_logradouro" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>Atributo do Logradouro</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\Street</source_model>
+	                </field>
+	                <field id="street_number" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>Atributo do Número</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\Street</source_model>
+	                </field>
+	                <field id="street_complemento" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>Atributo do Complemento</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\Street</source_model>
+	                </field>
+	                <field id="street_district" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="0">
+	                    <label>Atributo do Bairro</label>
+	                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\Street</source_model>
+	                </field>
+               	</group>
+
+            </group>
+             <group id="ipagboleto" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Ipag - Boleto</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="cctypes" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Bankslip Type</label>
+                    <source_model>Ipag\Payment\Model\Adminhtml\Source\BankslipType</source_model>
+                    <config_path>payment/ipag/banksliptypes</config_path>
+                </field>
+                <field id="order_status" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>New Order Status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
+                </field>
+                <field id="payment_action" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Automatically Invoice All Items</label>
+                    <source_model>Magento\Payment\Model\Source\Invoice</source_model>
+                    <depends>
+                        <field id="order_status" separator=",">processing</field>
+                    </depends>
+                </field>
+                <field id="expiration" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Vencimento do Boleto</label>
+                    <comment>em dias</comment>
+                    <validate>required-entry validate-number</validate>
+                </field>
+                <field id="instruction" translate="label" type="textarea" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Texto Personalizado</label>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sort Order</label>
+                </field>
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="130" showInDefault="9"
+                       showInWebsite="1" showInStore="0">
+                    <label>Payment From Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="140" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
+                    <label>Payment From Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                </field>
+            </group>
+            <group id="ipagcc" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Ipag - Cartão de Crédito</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+			 	<field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="cctypes" translate="label" type="multiselect" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Types</label>
+                    <source_model>Ipag\Payment\Model\Adminhtml\Source\CcType</source_model>
+                    <config_path>payment/ipag/cctypes</config_path>
+                </field>
+                <field id="order_status" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>New Order Status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
+                </field>
+                <field id="payment_action" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Automatically Invoice All Items</label>
+                    <source_model>Magento\Payment\Model\Source\Invoice</source_model>
+                    <depends>
+                        <field id="order_status" separator=",">processing</field>
+                    </depends>
+                </field>
+				<group id="installment" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Configurações de parcelamento e juros</label>
+                        <field id="type_interest" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                            <label>Tipo de Juros</label>
+                            <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeInterest</source_model>
+                        </field>
+
+        				<field id="min_installment" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                            <label>Valor mínimo de cada parcela</label>
+                            <validate>required-entry validate-number</validate>
+                        </field>
+        				<field id="max_installment" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                            <label>Número Máximo de Parcelas</label>
+                            <validate>required-entry validate-number</validate>
+                        </field>
+                        <field id="interest_free" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+                            <label>Parcelas sem Juros</label>
+                            <validate>required-entry validate-number</validate>
+                        </field>
+        				<field id="interest" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
+                            <label>Taxa de Juros (%)</label>
+                            <validate>required-entry validate-number</validate>
+                        </field>
+                        <field id="additional_type" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                            <label>Taxa Adicional</label>
+                            <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeAdditional</source_model>
+                        </field>
+                        <field id="additional_amount" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="1">
+                            <label>Valor da Taxa Adicional</label>
+                            <validate>required-entry validate-number</validate>
+                        </field>
+				</group>
+				<field id="sort_order" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sort Order</label>
+                </field>
+				<field id="allowspecific" translate="label" type="allowspecific" sortOrder="130" showInDefault="9"
+                       showInWebsite="1" showInStore="0">
+                    <label>Payment From Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="140" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
+                    <label>Payment From Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
