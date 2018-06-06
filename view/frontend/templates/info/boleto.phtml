@@ -1,0 +1,45 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+/**
+ * @var \Magento\Payment\Block\Info $block
+ * @see \Magento\Payment\Block\Info
+ */
+$specificInfo = $block->getSpecificInformation();
+$title = $block->escapeHtml($block->getMethod()->getTitle());
+$boletoUrl = $block->getLinkPrintPay();
+?>
+<dl class="payment-method">
+    <dt class="title"><?= /* @noEscape */ $title ?></dt>
+<?php if ($specificInfo):?>
+    <dd class="content">
+        <table class="data table">
+            <caption class="table-caption"><?= /* @noEscape */ $title ?></caption>
+            <?php foreach ($specificInfo as $label => $value):?>
+                <tr>
+                    <th scope="row"><?= $block->escapeHtml($label) ?></th>
+                    <td>
+                        <?= /* @noEscape */ nl2br($block->escapeHtml(implode("\n", $block->getValueAsArray($value, true)))) ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if ($boletoUrl):?>
+                <tr>
+                    <th scope="row"><?= $block->escapeHtml('Link')?></th>
+                    <td>
+                        <a href="<?php echo $boletoUrl; ?>" class="btn btn-link" target="_blank">
+                            Imprimir Boleto
+                        </a>
+                    </td>
+                </tr>
+            <?php endif;?>
+        </table>
+    </dd>
+<?php endif;?>
+</dl>
+<?= $block->getChildHtml() ?>
