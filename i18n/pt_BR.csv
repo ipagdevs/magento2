@@ -7,3 +7,5 @@
 "Card Interest","Juros do cartão"
 "Card Expiration","Válido até"
 "Credit Card Type","Bandeira"
+"Transaction Message", "Status do Pagamento"
+"Transaction Code", "ID do Pagamento"

@@ -2,7 +2,7 @@
   "name": "ipag/magento2-module",
   "description": "iPag Payment Extension for Magento 2",
   "type": "magento2-module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "authors":[
     {
