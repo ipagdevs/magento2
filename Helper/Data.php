@@ -467,6 +467,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $additional_type;
     }
 
+    public function getCcInfo()
+    {
+        $ccinfo = $this->_scopeConfig->getValue('payment/ipagcc/show_info', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+
+        return $ccinfo;
+    }
+
+    public function getBoletoInfo()
+    {
+        $boletoinfo = $this->_scopeConfig->getValue('payment/ipagboleto/show_info', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+
+        return $boletoinfo;
+    }
+
     public function getDueNumber()
     {
         $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/expiration', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);

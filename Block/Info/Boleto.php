@@ -10,6 +10,26 @@ class Boleto extends \Magento\Payment\Block\Info
     protected $keys = ['payment.message' => 'Transaction Message'];
     protected $adminKeys = ['tid' => 'Transaction Code'];
     protected $_template = 'Ipag_Payment::info/boleto.phtml';
+    protected $ipagHelper;
+
+    public function __construct(
+        \Magento\Framework\View\Element\Template\Context $context,
+        \Ipag\Payment\Helper\Data $ipagHelper,
+        array $data = []
+    ) {
+        parent::__construct($context, $data);
+        $this->_ipagHelper = $ipagHelper;
+    }
+
+    /**
+     * Retrieve boletoinfo configuration
+     *
+     * @return string
+     */
+    public function getBoletoInfo()
+    {
+        return $this->_ipagHelper->getBoletoInfo();
+    }
 
     public function getLinkPay()
     {
@@ -26,22 +46,6 @@ class Boleto extends \Magento\Payment\Block\Info
 
         return $transactionId;
     }
-
-    /*public function getLineCodeBoleto()
-    {
-    $_info = $this->getInfo();
-    $transactionId = $_info->getAdditionalInformation('line_code_boleto');
-
-    return $transactionId;
-    }
-
-    public function getExpirationDateBoleto()
-    {
-    $_info = $this->getInfo();
-    $transactionId = $_info->getAdditionalInformation('expiration_date_boleto');
-
-    return $transactionId;
-    }*/
 
     /**
      * Prepare bankslip related payment info
@@ -61,7 +65,7 @@ class Boleto extends \Magento\Payment\Block\Info
                 $data[(string) __($label)] = $this->getInfo()->getAdditionalInformation($key);
             }
         }
-        if ($this->_appState->getAreaCode() === \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE) {
+        if ($this->_appState->getAreaCode() === \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE || $this->getBoletoInfo()) {
             foreach ($this->adminKeys as $key => $label) {
                 if ($this->getInfo()->getAdditionalInformation($key)) {
                     $data[(string) __($label)] = $this->getInfo()->getAdditionalInformation($key);
