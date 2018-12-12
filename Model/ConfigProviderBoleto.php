@@ -8,7 +8,7 @@ use Magento\Payment\Helper\Data as PaymentHelper;
 
 class ConfigProviderBoleto implements ConfigProviderInterface
 {
-	
+
    /**
      * @var string[]
      */
@@ -25,7 +25,7 @@ class ConfigProviderBoleto implements ConfigProviderInterface
     protected $escaper;
 
     protected $scopeConfig;
-   
+
 
     /**
      * @param PaymentHelper $paymentHelper
@@ -77,11 +77,11 @@ class ConfigProviderBoleto implements ConfigProviderInterface
     {
         $day = (int)$this->scopeConfig->getValue("payment/ipagboleto/expiration");
         if($day > 1) {
-            return nl2br(sprintf(__('Vencimento em %s dias'), $day));    
+            return nl2br(__('Vencimento em %1 dias', $day));
         } else {
-            return nl2br(sprintf(__('Vencimento em %s dia'), $day));    
+            return nl2br(__('Vencimento em %1 dia', $day));
         }
-        
+
     }
 
 
