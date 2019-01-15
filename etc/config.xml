@@ -46,9 +46,14 @@
                 <active>1</active>
                 <title>Boleto Bancário</title>
                 <expiration>3</expiration>
-                <instruction><![CDATA[
-                    Efetue o pagamento até o vencimento.
-                ]]></instruction>
+                <instruction><![CDATA[Efetue o pagamento até o vencimento.]]></instruction>
+                <installment>
+                    <active>0</active>
+                    <type_interest>simple</type_interest>
+                    <min_installment>5</min_installment>
+                    <max_installment>12</max_installment>
+                    <interest>0</interest>
+                </installment>
             </ipagboleto>
         </payment>
     </default>

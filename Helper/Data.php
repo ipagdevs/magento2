@@ -335,6 +335,37 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $additionalPrice;
     }
 
+    public function addAdditionalPriceBoleto($order, $count = null)
+    {
+        $tax = $order->getTaxAmount() * self::ROUND_UP;
+        $tax = (int) $tax;
+        $rate = $this->getJurosBoleto();
+        $total = $order->getGrandTotal();
+
+        if ($count > $this->getSemJurosBoleto() && $rate > 0) {
+            $type_interest = $this->getTypeInterestBoleto();
+            if ($type_interest == "compound") {
+                $parcela = $this->getJurosComposto($total, $rate, $count);
+            } else {
+                $parcela = $this->getJurosSimples($total, $rate, $count);
+            }
+
+            $total_parcelado = $parcela * $count;
+            $additionalPrice = $total_parcelado - $order->getGrandTotal();
+            $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
+            $additionalPrice = $additionalPrice + $tax;
+
+        } elseif ($total > $order->getGrandTotal()) {
+            $additionalPrice = $total - $order->getGrandTotal();
+            $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
+            $additionalPrice = $additionalPrice + $tax;
+        } else {
+            $additionalPrice = $tax;
+        }
+        $additionalPrice = number_format((float) $additionalPrice / 100, 2, '.', '');
+        return $additionalPrice;
+    }
+
     public function addPayBoletoIpag($ipag, $InfoInstance)
     {
         $method = $this->getBoletoMethod();
@@ -455,6 +486,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $semJuros;
     }
 
+    public function getJurosBoleto()
+    {
+        $juros = $this->_scopeConfig->getValue('payment/ipagboleto/installment/interest');
+        return $juros;
+    }
+
+    public function getSemJurosBoleto()
+    {
+        $semJuros = $this->_scopeConfig->getValue('payment/ipagboleto/installment/interest_free');
+        return $semJuros;
+    }
+
+    public function getTypeInterestBoleto()
+    {
+        $parcelasMinimo = $this->_scopeConfig->getValue('payment/ipagboleto/installment/type_interest');
+        return $parcelasMinimo;
+    }
+
     public function getAdditionalAmount()
     {
         $additional_amount = $this->_scopeConfig->getValue('payment/ipagcc/installment/additional_amount', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
@@ -465,20 +514,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $additional_type = $this->_scopeConfig->getValue('payment/ipagcc/installment/additional_type', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         return $additional_type;
-    }
-
-    public function getCcInfo()
-    {
-        $ccinfo = $this->_scopeConfig->getValue('payment/ipagcc/show_info', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        return $ccinfo;
-    }
-
-    public function getBoletoInfo()
-    {
-        $boletoinfo = $this->_scopeConfig->getValue('payment/ipagboleto/show_info', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        return $boletoinfo;
     }
 
     public function getDueNumber()

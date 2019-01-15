@@ -1,6 +1,15 @@
-<?php if($block->getMethodCode() === "ipagboleto"): ?>
+<?php if($block->getMethodCode() === "ipagboleto"):
+if (!empty($block->getInfo('urlAuthentication'))) {
+    $url = $block->getInfo('urlAuthentication');
+}
+else {
+    if (!empty($block->getInfo('attributes.links.payment'))) {
+        $url = $block->getInfo('attributes.links.payment');
+    }
+}
+?>
 	<p>
-		<a href="<?php echo $block->getInfo('urlAuthentication'); ?>" target="_blank" class="action primary continue">
+		<a href="<?php echo $url; ?>" target="_blank" class="action primary continue">
 			<?php echo __('Imprimir Boleto') ?>
 		</a>
 	</p>

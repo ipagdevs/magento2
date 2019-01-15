@@ -7,29 +7,8 @@ namespace Ipag\Payment\Block\Info;
 
 class Cc extends \Magento\Payment\Block\Info\Cc
 {
-    protected $keys = ['fullname' => 'Name on Card', 'installments' => 'Installments', 'interest' => 'Card Interest'];
+    protected $keys = ['fullname' => 'Name on Card', 'installments' => 'Installments', 'interest' => 'Card Interest', 'total_with_interest' => 'Total Price with Interest'];
     protected $adminKeys = ['tid' => 'Transaction Code', 'payment.message' => 'Transaction Message'];
-    protected $ipagHelper;
-
-    public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Ipag\Payment\Helper\Data $ipagHelper,
-        \Magento\Payment\Model\Config $config,
-        array $data = []
-    ) {
-        parent::__construct($context, $config, $data);
-        $this->_ipagHelper = $ipagHelper;
-    }
-
-    /**
-     * Retrieve ccinfo configuration
-     *
-     * @return string
-     */
-    public function getCcInfo()
-    {
-        return $this->_ipagHelper->getCcInfo();
-    }
 
     /**
      * Retrieve CC expiration month
@@ -63,7 +42,7 @@ class Cc extends \Magento\Payment\Block\Info\Cc
         if ($this->hasCcExpDate()) {
             $data[(string) __('Card Expiration')] = $this->_formatCardDate($this->getCcExpYear(), $this->getCcExpMonth());
         }
-        if ($this->_appState->getAreaCode() === \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE || $this->getCcInfo()) {
+        if ($this->_appState->getAreaCode() === \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE) {
             foreach ($this->adminKeys as $key => $label) {
                 if ($this->getInfo()->getAdditionalInformation($key)) {
                     $data[(string) __($label)] = $this->getInfo()->getAdditionalInformation($key);
