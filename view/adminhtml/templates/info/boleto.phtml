@@ -14,8 +14,8 @@ $boletoUrl = $block->getLinkPrintPay();
 ?>
 <?= $block->escapeHtml($block->getMethod()->getTitle()) ?>
 
+<table class="data-table admin__table-secondary">
 <?php if ($specificInfo): ?>
-    <table class="data-table admin__table-secondary">
     <?php foreach ($specificInfo as $label => $value):?>
         <tr>
             <th><?= $block->escapeHtml($label) ?>:</th>
@@ -24,6 +24,7 @@ $boletoUrl = $block->getLinkPrintPay();
             </td>
         </tr>
     <?php endforeach; ?>
+<?php endif;?>
     <?php if ($boletoUrl):?>
         <tr>
             <th scope="row"><?= $block->escapeHtml('Link')?></th>
@@ -34,7 +35,33 @@ $boletoUrl = $block->getLinkPrintPay();
             </td>
         </tr>
     <?php endif;?>
+</table>
+
+<div class="admin__table-wrapper">
+    <table class="data-table admin__table-primary edit-order-table">
+        <thead>
+            <tr class="headings">
+                <?php $i = 0;
+                $columns = $block->getColumns();
+                $lastItemNumber = count($columns) ?>
+                <?php foreach ($columns as $columnName => $columnTitle):?>
+                    <?php $i++; ?>
+                    <th class="col-<?= /* @noEscape */ $columnName ?><?= /* @noEscape */ ($i === $lastItemNumber ? ' last' : '') ?>"><span><?= /* @noEscape */ $columnTitle ?></span></th>
+                <?php endforeach; ?>
+            </tr>
+        </thead>
+        <?php $_parcelas = $block->getParcelasCollection();?>
+        <?php $i = 0; foreach ($_parcelas as $_parcela) : $i++ ?>
+            <tbody class="<?= /* @noEscape */ $i%2 ? 'even' : 'odd' ?>">
+                <td class="col-parcela-number"><?= $block->getColumnHtml($_parcela, 'installment_number') ?></td>
+                <td class="col-parcela-due-date"><?= $block->getColumnHtml($_parcela, 'due_date') ?></td>
+                <td class="col-parcela-amount"><?= $block->getColumnHtml($_parcela, 'amount') ?></td>
+                <td class="col-parcela-payment-date"><?= $block->getColumnHtml($_parcela, 'payment_date') ?></td>
+                <td class="col-parcela-paid-amount"><?= $block->getColumnHtml($_parcela, 'paid_amount') ?></td>
+                <td class="col-parcela-tid"><?= $block->getColumnHtml($_parcela, 'ipag_tid') ?></td>
+            </tbody>
+        <?php endforeach; ?>
     </table>
-<?php endif;?>
+</div>
 
 <?= $block->getChildHtml() ?>

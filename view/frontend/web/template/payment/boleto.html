@@ -29,7 +29,7 @@
                 <address class="ipagboleto due address" data-bind="html: getDue()"></address>
             </dd>
 
-          
+
             <!-- /ko -->
             <!-- ko if: getInstruction() -->
             <dt class="title"><!-- ko i18n: 'Instruction' --><!-- /ko --></dt>
@@ -38,6 +38,29 @@
             </dd>
             <!-- /ko -->
         </dl>
+        <!-- /ko -->
+        <!-- ko if: (getInstallmentsActive() == 1) -->
+        <form class="form" id ="ipagboleto-form" method="post">
+            <fieldset data-bind="attr: {class: 'fieldset payment items boleto ' + getCode(), id: 'payment_form_' + getCode()}">
+                <div class="field instament required" data-bind="visible: getInstallmentsActive()">
+                    <label data-bind="attr: {for: getCode() + '_installments'}" class="label">
+                        <span><!-- ko i18n: 'Installments'--><!-- /ko --></span>
+                    </label>
+                    <div class="control">
+                        <select  name="installments"
+                                 class="select select-installments"
+                                 data-bind="attr: {id: getCode() + '_installments',
+                                                'data-container': getCode() + '-installments',
+                                                'data-validate': JSON.stringify({required:true})},
+                                           options: getInstallments(),
+                                           optionsText: 'installments',
+                                           optionsValue: 'value'
+                                           ">
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
         <!-- /ko -->
         <div class="checkout-agreements-block">
             <!-- ko foreach: $parent.getRegion('before-place-order') -->
@@ -61,4 +84,4 @@
         </div>
     </div>
 </div>
-        
+

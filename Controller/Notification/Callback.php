@@ -10,6 +10,8 @@ class Callback extends \Magento\Framework\App\Action\Action
 {
     protected $_logger;
     protected $_ipagHelper;
+    protected $_ipagBoletoModel;
+    protected $_ipagInvoiceInstallments;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -19,8 +21,9 @@ class Callback extends \Magento\Framework\App\Action\Action
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
-        \Ipag\Payment\Helper\Data $ipagHelper
-
+        \Ipag\Payment\Helper\Data $ipagHelper,
+        \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
+        \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments
     ) {
         $this->_invoiceService = $invoiceService;
         $this->_transaction = $transaction;
@@ -29,6 +32,8 @@ class Callback extends \Magento\Framework\App\Action\Action
         $this->orderManagement = $orderManagement;
         $this->invoiceSender = $invoiceSender;
         $this->_ipagHelper = $ipagHelper;
+        $this->_ipagBoletoModel = $ipagBoletoModel;
+        $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
         parent::__construct($context);
     }
 
@@ -49,41 +54,35 @@ class Callback extends \Magento\Framework\App\Action\Action
             echo "Contem erro! {$response->error} - {$response->errorMessage}";
         }
 
-        // Verificar se a transação foi aprovada e capturada:
-        if ($response->payment->status == '8') {
-            echo 'Transação Aprovada e Capturada';
-            // Atualize minha base de dados ...
-        }
         $order_id = $response->order->orderId;
         if ($order_id) {
             $this->_logger->info(print_r($response, true));
             $order = $this->order->loadByIncrementId($order_id);
-            /*if ($order->canInvoice()) {
-            $invoice = $this->_invoiceService->prepareInvoice($order);
-            $invoice->setRequestedCaptureCase(Invoice::CAPTURE_ONLINE);
-            $invoice->register();
-            $invoice->save();
-            $transactionSave = $this->_transaction->addObject(
-            $invoice
-            )->addObject(
-            $invoice->getOrder()
-            );
-            $transactionSave->save();
-            $this->invoiceSender->send($invoice);
-            //send notification code
-            $order->addStatusHistoryComment(
-            __('Notified customer about invoice #%1.', $invoice->getId())
-            )
-            ->setIsCustomerNotified(true)
-            ->save();
-            } else {
-            $this->_logger->debug("Not canInvoice".$transaction_id);
-            }*/
-            $order->addStatusHistoryComment(
-                __('iPag response: Status: %1, Message: %2.', $response->payment->status, $response->payment->message)
-            )
-                ->setIsCustomerNotified(false)
-                ->save();
+
+            $parcelas = $this->_ipagInvoiceInstallments->select(['order_id' => $order_id]);
+            if($parcelas) {
+                $parcela = array_shift($parcelas);
+                $ipag_id = $parcela['ipag_invoice_id'];
+                $response = $this->_ipagBoletoModel->queryInvoice($ipag_id);
+                $json = json_decode($response, false);
+                $response = $json->attributes->installments->data;
+                $response = json_decode(json_encode($response), true);
+
+                $this->_ipagInvoiceInstallments->import($response, $order_id, $ipag_id);
+                echo 'Importação do Invoice OK';
+            }
+            else {
+                // Verificar se a transação foi aprovada e capturada:
+                if ($response->payment->status == '8') {
+                    echo 'Transação Aprovada e Capturada';
+                    // Atualize minha base de dados ...
+                }
+                $order->addStatusHistoryComment(
+                    __('iPag response: Status: %1, Message: %2.', $response->payment->status, $response->payment->message)
+                )
+                    ->setIsCustomerNotified(false)
+                    ->save();
+            }
         }
     }
 }

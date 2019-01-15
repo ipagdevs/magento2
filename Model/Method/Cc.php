@@ -137,10 +137,13 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 $installments = $InfoInstance->getAdditionalInformation('installments');
 
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
+                $total = $order->getGrandTotal() + $additionalPrice;
                 if ($additionalPrice >= 0.01) {
                     $brl = 'R$';
                     $formatted = number_format($additionalPrice, '2', ',', '.');
+                    $totalformatted = number_format($total, '2', ',', '.');
                     $InfoInstance->setAdditionalInformation('interest', $brl.$formatted);
+                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl.$totalformatted);
                 }
                 $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
                 $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer, $additionalPrice, $installments);
@@ -149,7 +152,8 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 $response = $ipag->transaction()->setOrder($ipagOrder)->execute();
 
                 $json = json_decode(json_encode($response), true);
-                $this->logger->loginfo($json, self::class.' RESPONSE');
+                $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
+                $this->logger->loginfo($json, self::class.' RESPONSE JSON');
                 foreach ($json as $j => $k) {
                     if (is_array($k)) {
                         foreach ($k as $l => $m) {
