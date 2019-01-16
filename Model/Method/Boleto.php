@@ -271,13 +271,13 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                 ]
             ]
         ];
+        $this->logger->loginfo($payload, self::class.' REQUEST CUSTOMER');
         $client = new Client(["base_uri" => $ipag->getEndpoint()->getUrl()]);
         $response = $client->request('POST', 'service/resources/customers', $payload);
 
         $responseBody = $response->getBody()->getContents();
         $statusCode = $response->getStatusCode();
 
-        $this->logger->loginfo($payload, self::class.' REQUEST CUSTOMER');
         $this->logger->loginfo([$responseBody], self::class.' RESPONSE CUSTOMER');
 
         if($statusCode == 201) {
@@ -303,11 +303,11 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                     "installments" => $installments
                 ]
             ];
+            $this->logger->loginfo($payloadInvoice, self::class.' REQUEST INVOICE');
 
             $response = $client->request('POST', 'service/resources/invoices', $payloadInvoice);
             $responseBody = $response->getBody()->getContents();
 
-            $this->logger->loginfo($payloadInvoice, self::class.' REQUEST INVOICE');
             $this->logger->loginfo([$responseBody], self::class.' RESPONSE INVOICE');
 
             return $responseBody;

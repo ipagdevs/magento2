@@ -134,7 +134,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $billing_number = $street_billing[$this->getStreetPositionNumber()];
 
-        if (count($street_billing) >= 3) {
+        if (count($street_billing) >= 3 && array_key_exists($this->getStreetPositionDistrict(), $street_billing)) {
             $billing_district = $street_billing[$this->getStreetPositionDistrict()];
         } else {
             $billing_district = $street_billing[$this->getStreetPositionLogradouro()];
