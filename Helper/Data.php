@@ -22,13 +22,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\ObjectManagerInterface $objectManager,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Payment\Model\Method\Logger $logger
+        \Magento\Payment\Model\Method\Logger $logger,
+        \Magento\Customer\Model\CustomerFactory $customerFactory
     ) {
         $this->_scopeConfig = $scopeConfig;
         $this->_objectManager = $objectManager;
         $this->date = $date;
         $this->_storeManager = $storeManager;
         $this->_logger = $logger;
+        $this->customerFactory = $customerFactory;
     }
 
     public function AuthorizationValidate()
@@ -46,6 +48,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function generateCustomerIpag($ipag, $order)
     {
+        $customerId = $order->getCustomerId();
+        $customerData = !empty($customerId) ? $this->customerFactory->create()->load($customerId)->toArray() : [];
+
         if (!$order->getCustomerFirstname()) {
             $name = $order->getBillingAddress()->getName();
         } else {
@@ -57,6 +62,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if ($type_cpf === "customer") {
             $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
             $_taxvat = $order->getData('customer_'.$attribute_cpf_customer);
+            if (empty($_taxvat) && !empty($customerData)) {
+                if (array_key_exists($attribute_cpf_customer, $customerData)) {
+                    $_taxvat = $customerData[$attribute_cpf_customer];
+                }
+            }
         } else {
             $attribute_cpf_address = $this->getCpfAttributeForAddress();
             $_taxvat = $order->getBillingAddress()->getData($attribute_cpf_address);
@@ -75,6 +85,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
                     $name = $order->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
                 } else {
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $order->getBillingAddress()->getData($attribute_name);
@@ -87,12 +102,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         } elseif ($type_cnpj === "use_customer") {
             $attribute_cnpj = $this->getCNPJAttributeForCustomer();
             $_taxvat = $order->getData('customer_'.$attribute_cnpj);
+            if (empty($_taxvat) && !empty($customerData)) {
+                if (array_key_exists($attribute_cnpj, $customerData)) {
+                    $_taxvat = $customerData[$attribute_cnpj];
+                }
+            }
             if ($_taxvat) {
                 $_typedocument = "CNPJ";
                 $type_name_company = $this->getTypeNameCompany();
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
                     $name = $order->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
                 } else {
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $order->getBillingAddress()->getData($attribute_name);
@@ -108,6 +133,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
                     $name = $order->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
                 } else {
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $order->getBillingAddress()->getData($attribute_name);
