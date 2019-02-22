@@ -5,8 +5,12 @@ use Ipag\Classes\Services\CallbackService;
 use Ipag\Ipag;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Model\Order;
+use Magento\Framework\App\ProductMetadataInterface;
+//use Magento\Framework\App\RequestInterface;
+//use Magento\Framework\App\Request\InvalidRequestException;
+//use Magento\Framework\App\CsrfAwareActionInterface;
 
-class Callback extends \Magento\Framework\App\Action\Action
+class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwareActionInterface
 {
     protected $_logger;
     protected $_ipagHelper;
@@ -21,6 +25,7 @@ class Callback extends \Magento\Framework\App\Action\Action
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         \Ipag\Payment\Helper\Data $ipagHelper,
         \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments
@@ -34,8 +39,28 @@ class Callback extends \Magento\Framework\App\Action\Action
         $this->_ipagHelper = $ipagHelper;
         $this->_ipagBoletoModel = $ipagBoletoModel;
         $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
+        $this->productMetadata = $productMetadata;
+
         parent::__construct($context);
+
+        //compatibilidade com Magento 2.3
+        //o certo seria implementar a interface CsrfAwareActionInterface, mas isso quebra a retrocompatibilidade com Magento < 2.2 e PHP < 7.1
+        $version = $this->productMetadata->getVersion();
+        if (version_compare($version, '2.3.0') >= 0) {
+            $this->execute();
+            die();
+        }
     }
+
+    /*public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
+    }
+
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return true;
+    }*/
 
     public function execute()
     {
