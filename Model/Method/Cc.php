@@ -148,6 +148,12 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
                 $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer, $additionalPrice, $installments);
 
+                $quoteInstance = $this->_cart->getQuote()->getPayment();
+                $numero = $InfoInstance->getAdditionalInformation('cc_number');
+                $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
+                $quoteInstance->setAdditionalInformation('cc_number', preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero));
+                $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
+
                 $this->logger->loginfo($ipagOrder, self::class.' REQUEST');
                 $response = $ipag->transaction()->setOrder($ipagOrder)->execute();
 
