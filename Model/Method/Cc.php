@@ -2,6 +2,7 @@
 namespace Ipag\Payment\Model\Method;
 
 use Ipag\Ipag;
+use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
 use \Magento\Sales\Model\Order\Payment;
 
@@ -92,9 +93,16 @@ class Cc extends \Magento\Payment\Model\Method\Cc
     public function assignData(\Magento\Framework\DataObject $data)
     {
         parent::assignData($data);
+        $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
+        if (!is_array($additionalData)) {
+            return $this;
+        }
         $infoInstance = $this->getInfoInstance();
         $currentData = $data->getAdditionalData();
         foreach ($currentData as $key => $value) {
+            if ($key === \Magento\Framework\Api\ExtensibleDataInterface::EXTENSION_ATTRIBUTES_KEY) {
+                continue;
+            }
             $infoInstance->setAdditionalInformation($key, $value);
         }
         return $this;

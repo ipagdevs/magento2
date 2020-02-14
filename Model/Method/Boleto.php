@@ -1,11 +1,12 @@
 <?php
 namespace Ipag\Payment\Model\Method;
 
-use Ipag\Ipag;
-use \Magento\Framework\Exception\LocalizedException;
-use \Magento\Sales\Model\Order\Payment;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use Ipag\Ipag;
+use Magento\Quote\Api\Data\PaymentInterface;
+use \Magento\Framework\Exception\LocalizedException;
+use \Magento\Sales\Model\Order\Payment;
 
 class Boleto extends \Magento\Payment\Model\Method\Cc
 {
@@ -101,10 +102,17 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
     public function assignData(\Magento\Framework\DataObject $data)
     {
         parent::assignData($data);
+        $additionalData = $data->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
+        if (!is_array($additionalData)) {
+            return $this;
+        }
         $infoInstance = $this->getInfoInstance();
         $currentData = $data->getAdditionalData();
-        foreach($currentData as $key=>$value){
-            $infoInstance->setAdditionalInformation($key,$value);
+        foreach ($currentData as $key => $value) {
+            if ($key === \Magento\Framework\Api\ExtensibleDataInterface::EXTENSION_ATTRIBUTES_KEY) {
+                continue;
+            }
+            $infoInstance->setAdditionalInformation($key, $value);
         }
         return $this;
     }
@@ -142,7 +150,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
             $customer = $this->_ipagHelper->generateCustomerIpag($ipag, $order);
             $installments = $InfoInstance->getAdditionalInformation('installments');
 
-            if($installments > 1) {
+            if ($installments > 1) {
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceBoleto($order, $installments);
                 $total = $order->getGrandTotal() + $additionalPrice;
                 if ($additionalPrice >= 0.01) {
@@ -159,16 +167,16 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                 $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
                 $this->logger->loginfo($json, self::class.' RESPONSE JSON');
                 $parcelas = [];
-                if(is_array( $json ) || ( is_object( $json ) && ( $json instanceof \Traversable ))) {
+                if (is_array($json) || (is_object($json) && ($json instanceof \Traversable))) {
                     foreach ($json as $j => $k) {
                         if (is_array($k)) {
                             foreach ($k as $l => $m) {
-                                if(is_array($m)) {
+                                if (is_array($m)) {
                                     foreach ($m as $n => $o) {
-                                        if(is_array($o)) {
+                                        if (is_array($o)) {
                                             foreach ($o as $p => $q) {
-                                                if(is_array($q)) {
-                                                    if($j.'.'.$l.'.'.$n === 'attributes.installments.data') {
+                                                if (is_array($q)) {
+                                                    if ($j.'.'.$l.'.'.$n === 'attributes.installments.data') {
                                                         $parcelas[] = $q;
                                                     }
                                                     $q = json_encode($q);
@@ -177,15 +185,13 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                                                 $json[$name] = $q;
                                                 $InfoInstance->setAdditionalInformation($name, $q);
                                             }
-                                        }
-                                        else {
+                                        } else {
                                             $name = $j.'.'.$l.'.'.$n;
                                             $json[$name] = $o;
                                             $InfoInstance->setAdditionalInformation($name, $o);
                                         }
                                     }
-                                }
-                                else {
+                                } else {
                                     $name = $j.'.'.$l;
                                     $json[$name] = $m;
                                     $InfoInstance->setAdditionalInformation($name, $m);
@@ -197,18 +203,17 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                         }
                     }
                 }
-                if(is_array($json)) {
+                if (is_array($json)) {
                     $payment->setTransactionId($json['id'])
                         ->setIsTransactionClosed(0)
                         ->setTransactionAdditionalInfo(\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS, $json);
                 }
 
                 $this->logger->loginfo($parcelas, self::class.' INSTALLMENTS');
-                if(!empty($parcelas)) {
+                if (!empty($parcelas)) {
                     $this->_ipagInvoiceInstallments->import($parcelas, $order->getIncrementId(), $json['id']);
                 }
-            }
-            else {
+            } else {
                 try {
                     $items = $this->_cart->getQuote()->getAllItems();
                     $InfoInstance = $this->getInfoInstance();
@@ -254,22 +259,22 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
         $payload = [
             "auth" => [
                 $ipag->getAuthentication()->getIdentification(),
-                $ipag->getAuthentication()->getApiKey()
+                $ipag->getAuthentication()->getApiKey(),
             ],
             "json" => [
-                "name" => $customer->getName(),
+                "name"     => $customer->getName(),
                 "cpf_cnpj" => $customer->getTaxpayerId(),
-                "email" => $customer->getEmail(),
-                "phone" => $customer->getPhone(),
-                "address" => [
-                    "street" => $customer->getAddress()->getStreet(),
-                    "number" => $customer->getAddress()->getNumber(),
+                "email"    => $customer->getEmail(),
+                "phone"    => $customer->getPhone(),
+                "address"  => [
+                    "street"   => $customer->getAddress()->getStreet(),
+                    "number"   => $customer->getAddress()->getNumber(),
                     "district" => $customer->getAddress()->getNeighborhood(),
-                    "city" => $customer->getAddress()->getCity(),
-                    "state" => $customer->getAddress()->getState(),
+                    "city"     => $customer->getAddress()->getCity(),
+                    "state"    => $customer->getAddress()->getState(),
                     "zip_code" => $customer->getAddress()->getZipCode(),
-                ]
-            ]
+                ],
+            ],
         ];
         $this->logger->loginfo($payload, self::class.' REQUEST CUSTOMER');
         $client = new Client(["base_uri" => $ipag->getEndpoint()->getUrl()]);
@@ -280,7 +285,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
 
         $this->logger->loginfo([$responseBody], self::class.' RESPONSE CUSTOMER');
 
-        if($statusCode == 201) {
+        if ($statusCode == 201) {
             $responseArray = json_decode($responseBody, true);
             $id = $responseArray['id'];
             $venctoDias = (int) $this->_ipagHelper->getDueNumber();
@@ -288,20 +293,20 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
             $payloadInvoice = [
                 "auth" => [
                     $ipag->getAuthentication()->getIdentification(),
-                    $ipag->getAuthentication()->getApiKey()
+                    $ipag->getAuthentication()->getApiKey(),
                 ],
                 "json" => [
-                    "is_active" => true,
-                    "type" => "normal",
-                    "frequency" => 1,
-                    "customer_id" => $id,
-                    "interval" => "month",
-                    "amount" => $total,
-                    "description" => $description,
+                    "is_active"     => true,
+                    "type"          => "normal",
+                    "frequency"     => 1,
+                    "customer_id"   => $id,
+                    "interval"      => "month",
+                    "amount"        => $total,
+                    "description"   => $description,
                     "starting_date" => $this->_date->gmtDate('Y-m-d', strtotime("+{$venctoDias} days")),
-                    "callback_url" => $this->getCallbackUrl(),
-                    "installments" => $installments
-                ]
+                    "callback_url"  => $this->getCallbackUrl(),
+                    "installments"  => $installments,
+                ],
             ];
             $this->logger->loginfo($payloadInvoice, self::class.' REQUEST INVOICE');
 
@@ -311,8 +316,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
             $this->logger->loginfo([$responseBody], self::class.' RESPONSE INVOICE');
 
             return $responseBody;
-        }
-        else {
+        } else {
             return $responseBody;
         }
     }
@@ -321,13 +325,13 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
     {
         $ipag = $this->_ipagHelper->AuthorizationValidate();
         $payloadInvoice = [
-            "auth" => [
+            "auth"  => [
                 $ipag->getAuthentication()->getIdentification(),
-                $ipag->getAuthentication()->getApiKey()
+                $ipag->getAuthentication()->getApiKey(),
             ],
             "query" => [
-                "id" => $ipag_id
-            ]
+                "id" => $ipag_id,
+            ],
         ];
 
         $client = new Client(["base_uri" => $ipag->getEndpoint()->getUrl()]);
