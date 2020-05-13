@@ -193,6 +193,56 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $customer;
     }
 
+    public function getIpagBaseConfigData($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagbase', $storeId);
+    }
+
+    public function getIpagBaseConfigDataFlag($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagbase', $storeId, true);
+    }
+
+    public function getIpagCcConfigData($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagcc', $storeId);
+    }
+
+    public function getIpagCcConfigDataFlag($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagcc', $storeId, true);
+    }
+
+    public function getIpagBoletoConfigData($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagboleto', $storeId);
+    }
+
+    public function getIpagBoletoConfigDataFlag($field, $storeId = null)
+    {
+        return $this->getConfigData($field, 'ipagboleto', $storeId, true);
+    }
+
+    /**
+     * Retrieve information from payment configuration
+     *
+     * @param $field
+     * @param $paymentMethodCode
+     * @param $storeId
+     * @param bool|false $flag
+     * @return bool|mixed
+     */
+    public function getConfigData($field, $paymentMethodCode, $storeId, $flag = false)
+    {
+        $path = 'payment/' . $paymentMethodCode . '/' . $field;
+
+        if (!$flag) {
+            return $this->_scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        } else {
+            return $this->_scopeConfig->isSetFlag($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        }
+    }
+
     public function getTypeForCNPJ()
     {
         $typecpf = $this->_scopeConfig->getValue('payment/ipagbase/advanced/type_cnpj', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);

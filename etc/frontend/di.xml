@@ -3,8 +3,8 @@
     <type name="Magento\Checkout\Model\CompositeConfigProvider">
         <arguments>
             <argument name="configProviders" xsi:type="array">
-                <item name="ipagcc_config_provider" xsi:type="object">Ipag\Payment\Model\ConfigProviderCc</item>
-                <item name="ipagboleto_config_provider" xsi:type="object">Ipag\Payment\Model\ConfigProviderBoleto</item>
+                <item name="ipagcc_config_provider" xsi:type="object">Ipag\Payment\Model\Ui\IpagCcConfigProvider</item>
+                <item name="ipagboleto_config_provider" xsi:type="object">Ipag\Payment\Model\Ui\IpagBoletoConfigProvider</item>
             </argument>
         </arguments>
     </type>

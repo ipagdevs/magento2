@@ -27,7 +27,7 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         \Ipag\Payment\Helper\Data $ipagHelper,
-        \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
+        #\Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments
     ) {
         $this->_invoiceService = $invoiceService;
@@ -37,7 +37,7 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
         $this->orderManagement = $orderManagement;
         $this->invoiceSender = $invoiceSender;
         $this->_ipagHelper = $ipagHelper;
-        $this->_ipagBoletoModel = $ipagBoletoModel;
+        #$this->_ipagBoletoModel = $ipagBoletoModel;
         $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
         $this->productMetadata = $productMetadata;
 

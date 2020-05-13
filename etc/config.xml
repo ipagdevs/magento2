@@ -4,7 +4,7 @@
         <payment>
             <ipagbase>
                 <title>Config Ipag</title>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>IpagPaymentGenericFacade</model>
                 <environment_mode>production</environment_mode>
                 <advanced>
                     <title>Config Avançada</title>
@@ -24,7 +24,7 @@
                 </advanced>
             </ipagbase>
             <ipagcc>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>IpagPaymentCcFacade</model>
 				<payment_action>authorize</payment_action>
                 <active>1</active>
                 <title>Cartão de Crédito</title>
@@ -41,7 +41,7 @@
                 </installment>
             </ipagcc>
             <ipagboleto>
-                <model>Ipag\Payment\Model\Method\Boleto</model>
+                <model>IpagPaymentBoletoFacade</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <title>Boleto Bancário</title>

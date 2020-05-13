@@ -23,7 +23,6 @@ class Preference extends \Magento\Backend\App\Action
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $configInterface,
         \Magento\Config\Model\ResourceModel\Config $resourceConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager
-        
         ) 
     {
         $this->_ipagHelper = $ipagHelper;

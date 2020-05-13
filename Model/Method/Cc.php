@@ -91,6 +91,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc
 
     public function assignData(\Magento\Framework\DataObject $data)
     {
+        $this->logger->loginfo([], self::class.' ASSIGN');
         parent::assignData($data);
         $infoInstance = $this->getInfoInstance();
         $currentData = $data->getAdditionalData();
@@ -102,6 +103,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc
 
     public function validate()
     {
+        $this->logger->loginfo([], self::class.' VALIDATE');
         $ipag = $this->_ipagHelper->AuthorizationValidate();
         return $this;
     }
@@ -117,19 +119,19 @@ class Cc extends \Magento\Payment\Model\Method\Cc
     public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         //parent::authorize($payment, $amount);
+        $this->logger->loginfo([], self::class.' AUTH');
         $order = $payment->getOrder();
-
         try {
-
+            $this->logger->loginfo([$amount], self::class.' AMOUNT');
             if ($amount <= 0) {
                 throw new LocalizedException(__('Invalid amount for authorization.'));
             }
-
+            $this->logger->loginfo([], self::class.' PRE-VALIDATE');
             $ipag = $this->_ipagHelper->AuthorizationValidate();
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
             $customer = $this->_ipagHelper->generateCustomerIpag($ipag, $order);
-
+            $this->logger->loginfo($customer, self::class.' IPAG CUSTOMER');
             try {
                 $items = $this->_cart->getQuote()->getAllItems();
                 $InfoInstance = $this->getInfoInstance();
@@ -281,6 +283,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc
 
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
+        $this->logger->loginfo([], self::class.' IS_AVAILABLE');
         if (!$this->isActive($quote ? $quote->getStoreId() : null)) {
             return false;
         }
