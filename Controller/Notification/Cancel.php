@@ -35,7 +35,7 @@ class Cancel extends \Magento\Framework\App\Action\Action
 			$ipag = $this->_ipagHelper->AuthorizationValidate();
 			$response = file_get_contents('php://input');
 			$originalNotification = json_decode($response, true);
-			/*$this->_logger->debug($response);*/
+			$this->_logger->debug($response);
 
 			$authorization = $this->getRequest()->getHeader('Authorization');
 			

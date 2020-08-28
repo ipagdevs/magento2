@@ -25,8 +25,9 @@
             </ipagbase>
             <ipagcc>
                 <model>Ipag\Payment\Model\Method\Cc</model>
-				<payment_action>authorize</payment_action>
+                <payment_action>authorize</payment_action>
                 <active>1</active>
+                <order_status>pending</order_status>
                 <title>Cartão de Crédito</title>
                 <cctypes>amex,visa,mastercard,diners,discover,jcb,elo,hipercard</cctypes>
                 <useccv>1</useccv>
@@ -44,6 +45,7 @@
                 <model>Ipag\Payment\Model\Method\Boleto</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
+                <order_status>pending</order_status>
                 <title>Boleto Bancário</title>
                 <expiration>3</expiration>
                 <instruction><![CDATA[Efetue o pagamento até o vencimento.]]></instruction>

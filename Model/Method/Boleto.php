@@ -153,6 +153,13 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
             if ($installments > 1) {
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceBoleto($order, $installments);
                 $total = $order->getGrandTotal() + $additionalPrice;
+
+				$order->setTaxAmount($additionalPrice);
+				$order->setBaseTaxAmount($additionalPrice);
+				$order->setGrandTotal($order->getGrandTotal() + $additionalPrice);
+				$order->setBaseGrandTotal($order->getBaseGrandTotal() + $additionalPrice);
+
+
                 if ($additionalPrice >= 0.01) {
                     $brl = 'R$';
                     $formatted = number_format($additionalPrice, '2', ',', '.');
@@ -162,6 +169,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                 }
                 $description = "Pedido #".$order->getIncrementId();
                 $response = $this->generateInvoice($ipag, $customer, $total, $installments, $description);
+
 
                 $json = json_decode($response, true);
                 $this->logger->loginfo([$response], self::class.' RESPONSE RAW');

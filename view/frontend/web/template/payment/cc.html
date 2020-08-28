@@ -59,8 +59,11 @@
 						<span><!-- ko i18n: 'Credit Card Number'--><!-- /ko --></span>
 					</label>
 					<div class="control">
-						<input type="number" name="cc_number" class="input-text" value=""
+						<input type="text" name="cc_number" class="input-text" value=""
+						minlength="11"
 					   data-bind="attr: {
+										minlength:11,
+										maxlength: creditCardMaxLength,
 										autocomplete: off,
 										id: getCode() + '_cc_number',
 										title: $t('Credit Card Number'),
@@ -116,8 +119,9 @@
 						<span><!-- ko i18n: 'Credit Card CVV'--><!-- /ko --></span>
 					</label>
 					<div class="control _with-tooltip">
-						<input type="text" name="cc_cvv" class="input-text" value="" maxlength="4"
+						<input type="text" name="cc_cvv" class="input-text" value=""
 							   data-bind="attr: {id: getCode() + '_cc_cid',
+							                maxlength: creditCardCvcMaxLength,
 											title: $t('Credit Card CVV'),
 											'data-container': getCode() + '-cc-cvv',
 											'data-validate': JSON.stringify({'required-number':true, 'validate-card-cvv2':'#' + getCode() + '_cc_type'})},

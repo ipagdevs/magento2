@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+	<event name="sales_order_place_after">
+		<observer name="ipag_payment_method_pagarme_credit_card_after_place_order"
+				  instance="Ipag\Payment\Observer\Sales\SalesOrderPlaceAfter" />
+	</event>
+</config>
