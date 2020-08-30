@@ -13,7 +13,7 @@ class Capture extends \Magento\Framework\App\Action\Action
 	protected $_ipagHelper;
 	
 	public function __construct(
-        \Magento\Framework\App\Action\Context $context,
+        \MagentprepareInvoiceo\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
 		 \Magento\Sales\Api\Data\OrderInterface $order,
 		 OrderManagementInterface $orderManagement,
