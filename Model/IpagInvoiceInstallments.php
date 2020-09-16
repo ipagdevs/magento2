@@ -20,7 +20,7 @@ class IpagInvoiceInstallments extends \Magento\Framework\Model\AbstractModel
     public function import($data, $order_id, $ipag_id)
     {
         $saved = $this->getByField('order_id', $order_id);
-        foreach($data as $d) {
+        foreach ($data as $d) {
             $d = $this->prepare($d, $order_id, $ipag_id);
             if (!$saved) {
                 $this->add($d);
@@ -40,12 +40,12 @@ class IpagInvoiceInstallments extends \Magento\Framework\Model\AbstractModel
      */
     public function prepare($data, $order_id, $ipag_id)
     {
-        $data['order_id']           = $order_id;
-        $data['ipag_invoice_id']    = $ipag_id;
+        $data['order_id'] = $order_id;
+        $data['ipag_invoice_id'] = $ipag_id;
         $data['installment_number'] = $data['number'];
-        $data['payment_amount']     = $data['paid_amount'] ??  0;
-        $data['payment_date']       = $data['payment_date'] ?? null;
-        $data['ipag_tid']           = $data['payment']['transaction']['id'] ?? null;
+        $data['payment_amount'] = $data['paid_amount'] ?? 0;
+        $data['payment_date'] = $data['payment_date'] ?? null;
+        $data['ipag_tid'] = $data['payment']['transaction']['id'] ?? null;
 
         return $data;
     }
@@ -63,10 +63,10 @@ class IpagInvoiceInstallments extends \Magento\Framework\Model\AbstractModel
     {
         if ($single) {
             $data = $this->getCollection()->addFieldToFilter($field, $value)
-                         ->getFirstItem();
+                ->getFirstItem();
         } else {
             $data = $this->getCollection()->addFieldToFilter($field, $value)
-                         ->load();
+                ->load();
         }
 
         return $data->toArray();
@@ -102,9 +102,9 @@ class IpagInvoiceInstallments extends \Magento\Framework\Model\AbstractModel
     public function update($fields)
     {
         $instance = $this->getCollection()
-                        ->addFieldToFilter('order_id', $fields['order_id'])
-                        ->addFieldToFilter('installment_number', $fields['installment_number'])
-                        ->getFirstItem();
+            ->addFieldToFilter('order_id', $fields['order_id'])
+            ->addFieldToFilter('installment_number', $fields['installment_number'])
+            ->getFirstItem();
 
         $instance->addData($fields);
 
@@ -127,7 +127,7 @@ class IpagInvoiceInstallments extends \Magento\Framework\Model\AbstractModel
         $instance = $objectManager->create('Ipag\Payment\Model\IpagInvoiceInstallments');
 
         $collection = $instance->getCollection()
-                               ->addFieldToSelect('*');
+            ->addFieldToSelect('*');
         foreach ($conditionals as $key => $value) {
             $collection = $collection->addFieldToFilter($key, $value);
         }

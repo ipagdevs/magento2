@@ -9,7 +9,7 @@
     <type name="Ipag\Payment\Logger\Logger">
         <arguments>
             <argument name="name" xsi:type="string">ipagLogger</argument>
-            <argument name="handlers"  xsi:type="array">
+            <argument name="handlers" xsi:type="array">
                 <item name="system" xsi:type="object">Ipag\Payment\Logger\Handler</item>
             </argument>
         </arguments>

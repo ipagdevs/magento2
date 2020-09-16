@@ -22,8 +22,7 @@ class Boleto extends \Magento\Payment\Block\Info
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments,
         array $data = []
-    )
-    {
+    ) {
         $this->_storeManager = $storeManager;
         $this->_currency = $currency;
         $this->_date = $date;
@@ -59,7 +58,7 @@ class Boleto extends \Magento\Payment\Block\Info
     {
         $info = $parcela->$nome;
         if (strpos($nome, 'date') !== false) {
-            if(!empty($info)) {
+            if (!empty($info)) {
                 $info = $this->_date->date('d/m/Y', $info);
             }
         }
