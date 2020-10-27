@@ -15,7 +15,7 @@
 			<p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']) ?></p>
 		<?php endif;?>
 
-		<?php if ($block->getOrderStatus() == "payment_review") :?>
+		<?php if ($block->getOrderStatus() == "payment_review" && $block->getMethodCode() == 'ipagcc') :?>
 			<p><?= $block->escapeHtml(__('Seu cartão não pode ser processado, entre em contato com sua operadora.'))
 				?></p>
 	     <?php  else :?>

@@ -15,6 +15,10 @@
                 <field id="apikey" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API-KEY</label>
                 </field>
+                <field id="version" translate="label" type="label" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Versão do Módulo</label>
+                    <backend_model>Ipag\Payment\Block\Adminhtml\System\Config\Version</backend_model>
+                </field>
                 <group id="advanced" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Configurações Avançadas</label>
                     <field id="type_cpf" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">

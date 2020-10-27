@@ -74,7 +74,21 @@
 								  valueUpdate: 'keyup' "/>
 					</div>
 				</div>
-				
+
+				<div class="field name required">
+					<label data-bind="attr: {for: getCode() + '_fullname'}" class="label">
+						<span><!-- ko i18n: 'Full Name'--><!-- /ko --></span>
+					</label>
+					<div class="control">
+						<input type="text" name="fullname" class="input-text"  value=""
+							   data-bind="attr: {
+												autocomplete: off,
+												id: getCode() + '_fullname',
+												title: $t('Card Holder Name'),
+												'data-container': getCode() + '-fullname',
+												'data-validate': JSON.stringify({'required':true})}"/>
+					</div>
+				</div>				
 				
 				<div class="field date required" data-bind="attr: {id: getCode() + '_cc_type_exp_div'}">
 					<label data-bind="attr: {for: getCode() + '_expiration'}" class="label">
@@ -162,20 +176,6 @@
 						
 					</div>
 				<!-- /ko -->
-				<div class="field name required">
-					<label data-bind="attr: {for: getCode() + '_fullname'}" class="label">
-						<span><!-- ko i18n: 'Full Name'--><!-- /ko --></span>
-					</label>
-					<div class="control">
-						<input type="text" name="fullname" class="input-text"  value=""
-							   data-bind="attr: {
-												autocomplete: off,
-												id: getCode() + '_fullname',
-												title: $t('Card Holder Name'),
-												'data-container': getCode() + '-fullname',
-												'data-validate': JSON.stringify({'required':true})}"/>
-					</div>
-				</div>
 				
 			</fieldset>
         </form>

@@ -11,7 +11,7 @@ use \Magento\Sales\Model\Order\Payment;
 class Boleto extends \Magento\Payment\Model\Method\Cc
 {
     const ROUND_UP = 100;
-    protected $_canAuthor˜ize = true;
+    protected $_canAuthorize = true;
     protected $_canCapture = false;
     protected $_canRefund = false;
     protected $_code = 'ipagboleto';
@@ -247,11 +247,23 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                         }
                     }
 
-                    $payment->setTransactionId($response->tid)
+                    /*$payment->setTransactionId($response->tid)
                         ->setIsTransactionClosed(0)
-                        ->setTransactionAdditionalInfo(\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS, $json);
+                        ->setTransactionAdditionalInfo(\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS, $json);*/
                 } catch (\Exception $e) {
                     throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+                }
+
+                if ($response->payment->status != 8) {
+                    $orderId = $order->getId();
+                    $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+                    $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
+                    $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                        ->setStatus($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope));
+                    $order->save();
+                    $payment->setIsTransactionPending(true);
+                    $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
+                    $this->logger->loginfo($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope), self::class.' STATUS');
                 }
             }
         } catch (\Exception $e) {
