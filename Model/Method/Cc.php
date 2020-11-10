@@ -171,6 +171,9 @@ class Cc extends \Magento\Payment\Model\Method\Cc
     {
 
         $order = $payment->getOrder();
+        $failedStatuses = [3, 7];
+        $approvedStatuses = [5, 8];
+        $pendingStatuses = [1, 2, 4];
 
         try {
 
@@ -239,22 +242,30 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                     }
                 }
 
-                if ($response->payment->status != 8) {
-
+                $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+                $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
+                $faturaAuto = $scopeConfig->getValue("payment/ipagcc/automatic_invoice");
+                if (in_array($response->payment->status, $failedStatuses)) {
                     $orderId = $order->getId();
                     $payment->setSkipTransactionCreation(true);
                     //throw new \Magento\Framework\Validator\Exception(__($errorMsg));
-                    $order->addStatusToHistory($order->getStatus(),
-                        'Seu cartão não pode ser processado, entre em contato conosco');
+                    $order->addStatusToHistory(
+                        $order->getStatus(),
+                        'Seu cartão não pode ser processado, entre em contato conosco'
+                    );
+                    $order->setState(\Magento\Sales\Model\Order::STATE_CANCELED);
                     $order->save();
                     $payment->setIsTransactionPending(true);
                     $order->cancel()->save();
                     //$payment->setIsFraudDetected(true);
 
-                } else {
+                } elseif (in_array($response->payment->status, $approvedStatuses) && $faturaAuto) {
                     $payment->setTransactionId($response->tid)
-                        ->setIsTransactionClosed(1)
-                        ->setTransactionAdditionalInfo('raw_details_info', $json);
+                        ->setIsTransactionClosed(1);
+                } else {
+                    $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                        ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
+                    $order->save();
                 }
 
             } catch (\Exception $e) {

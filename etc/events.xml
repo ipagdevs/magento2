@@ -4,6 +4,6 @@
 		<observer name="ipag_payment_method_observer_credit_invoice" instance="Ipag\Payment\Observer\Sales\SalesOrderInvoicePay" />
 	</event>
 	<event name="sales_order_place_after">
-		<observer name="ipag_payment_method_observer_billet_status" instance="Ipag\Payment\Observer\AddExtraDataToTransport" />
+		<observer name="ipag_payment_method_observer_status" instance="Ipag\Payment\Observer\AddExtraDataToTransport" />
 	</event>
 </config>
