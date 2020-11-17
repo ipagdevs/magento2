@@ -46,6 +46,101 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $ipag;
     }
 
+    public function getCustomerDocument($quote)
+    {
+        $type_cpf = $this->getTypeForCpf();
+
+        if ($type_cpf === "customer") {
+            $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
+            $_taxvat = $quote->getData('customer_'.$attribute_cpf_customer);
+            if (empty($_taxvat) && !empty($customerData)) {
+                if (array_key_exists($attribute_cpf_customer, $customerData)) {
+                    $_taxvat = $customerData[$attribute_cpf_customer];
+                }
+            }
+        } else {
+            $attribute_cpf_address = $this->getCpfAttributeForAddress();
+            $_taxvat = $quote->getBillingAddress()->getData($attribute_cpf_address);
+        }
+
+        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+
+        $type_cnpj = $this->getTypeForCNPJ();
+
+        if ($type_cnpj === "use_cpf") {
+
+            if (strlen($taxvat) > 11) {
+                $_typedocument = "CNPJ";
+                $type_name_company = $this->getTypeNameCompany();
+
+                if ($type_name_company === "customer") {
+                    $attribute_name = $this->getCompanyAttributeForCustomer();
+                    $name = $quote->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
+                } else {
+                    $attribute_name = $this->getCompanyAttributeForAddress();
+                    $name = $quote->getBillingAddress()->getData($attribute_name);
+                }
+
+            } else {
+                $_typedocument = "CPF";
+            }
+
+        } elseif ($type_cnpj === "use_customer") {
+            $attribute_cnpj = $this->getCNPJAttributeForCustomer();
+            $_taxvat = $quote->getData('customer_'.$attribute_cnpj);
+            if (empty($_taxvat) && !empty($customerData)) {
+                if (array_key_exists($attribute_cnpj, $customerData)) {
+                    $_taxvat = $customerData[$attribute_cnpj];
+                }
+            }
+            if ($_taxvat) {
+                $_typedocument = "CNPJ";
+                $type_name_company = $this->getTypeNameCompany();
+                if ($type_name_company === "customer") {
+                    $attribute_name = $this->getCompanyAttributeForCustomer();
+                    $name = $quote->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
+                } else {
+                    $attribute_name = $this->getCompanyAttributeForAddress();
+                    $name = $quote->getBillingAddress()->getData($attribute_name);
+                }
+
+            }
+        } elseif ($type_cnpj === "use_address") {
+            $attribute_cnpj_address = $this->getCNPJAttributeForAddress();
+            $_taxvat = $quote->getBillingAddress()->getData($attribute_cnpj_address);
+            if ($_taxvat) {
+                $_typedocument = "CNPJ";
+                $type_name_company = $this->getTypeNameCompany();
+                if ($type_name_company === "customer") {
+                    $attribute_name = $this->getCompanyAttributeForCustomer();
+                    $name = $quote->getData('customer_'.$attribute_name);
+                    if (empty($name) && !empty($customerData)) {
+                        if (array_key_exists($attribute_name, $customerData)) {
+                            $name = $customerData[$attribute_name];
+                        }
+                    }
+                } else {
+                    $attribute_name = $this->getCompanyAttributeForAddress();
+                    $name = $quote->getBillingAddress()->getData($attribute_name);
+                }
+            }
+        }
+
+        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+
+        return $taxvat;
+    }
+
     public function generateCustomerIpag($ipag, $order)
     {
         $customerId = $order->getCustomerId();
@@ -284,7 +379,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $street_logradouro;
     }
 
-    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments)
+    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '')
     {
         $baseUrl = $this->_storeManager->getStore()->getBaseUrl();
         $callbackUrl = $baseUrl.'ipag/notification/Callback';
@@ -302,6 +397,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             ->setCustomer($customer)
             ->setExpiry($expiration_date)
             ->setCart($cart);
+        
+        if (!empty($fingerprint)) {
+            $ipagOrder->setAcquirerToken($fingerprint);
+        }
 
         return $ipagOrder;
     }
@@ -605,5 +704,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'payment/ipagbase/'.$type.'_token_'.$_environment, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         return $token;
+    }
+
+    public function getStoreUrl()
+    {
+        return $this->_storeManager->getStore()->getBaseUrl();
     }
 }

@@ -50,5 +50,8 @@
                 </argument>
             </arguments>
         </referenceBlock>
+        <referenceContainer name="after.body.start">
+            <block class="Magento\Framework\View\Element\Template" name="beforebody" template="Ipag_Payment::prepareipag.phtml" />
+        </referenceContainer>
     </body>
 </page>

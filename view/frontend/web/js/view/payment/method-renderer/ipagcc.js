@@ -192,6 +192,10 @@ define(
 				return 1;
 			}),
 
+			getMercadoPagoActive: ko.computed(function () {
+				return window.checkoutConfig.payment.ipagcc.mp_active;
+			}),
+
 			getNumParcelas: function (total, maxp, minv) {
 				var nparc = maxp;
 				if (minv != '' && !isNaN(minv)) {
@@ -356,7 +360,7 @@ define(
 			},
 
 			getData: function () {
-				return {
+				var payload = {
 					'method': this.item.method,
 					'additional_data': {
 						'cc_number': this.creditCardNumber(),
@@ -368,6 +372,10 @@ define(
 						'installments': jQuery('#' + this.getCode() + '_installments').val(),
 					}
 				};
+				if (jQuery('#' + this.getCode() + '_mercadopago_token')) {
+					payload['additional_data']['fingerprint'] = jQuery('#' + this.getCode() + '_mercadopago_token').val();
+				}
+				return payload;
 			},
 
 			validate: function () {

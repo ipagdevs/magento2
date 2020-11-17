@@ -40,6 +40,8 @@
                     <additional_type>none</additional_type>
                     <additional_amount>0</additional_amount>
                 </installment>
+                <mp_active>0</mp_active>
+                <mp_token></mp_token>
             </ipagcc>
             <ipagboleto>
                 <model>Ipag\Payment\Model\Method\Boleto</model>

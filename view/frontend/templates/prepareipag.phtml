@@ -1,0 +1,135 @@
+<?php
+$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
+$helper = $this->helper('Ipag\Payment\Helper\Data');
+//$viewJsPath = $block->getViewFileUrl('Ipag_Payment::js/ipag.js');
+$storeUrl = $helper->getStoreUrl();
+$mercadopagotoken = 'TEST-7941b8ad-1beb-40a9-ab34-ae856d4cedad';
+
+$document = "";
+$document_type = "";
+$session = $objectManager->get('Magento\Checkout\Model\Session');
+$quote = $session->getQuote();
+if ($quote) {
+    $document = $helper->getCustomerDocument($quote);
+
+    $document_type = "CPF";
+    if (strlen($document) > 11) {
+        $document_type = "CNPJ";
+    }
+}
+?>
+
+<fieldset class="form-list" id="ipag-pay-mercadopago" style="min-height: 90px; display: none;">
+    <form action="" method="post" id="pay-old" name="pay" >
+        <input type="text" id="cardNumber" data-checkout="cardNumber"  autocomplete=off />
+        <input type="text" id="securityCode" data-checkout="securityCode"  autocomplete=off />
+        <input type="text" id="cardExpirationMonth" data-checkout="cardExpirationMonth" autocomplete=off />
+        <input type="text" id="cardExpirationYear" data-checkout="cardExpirationYear" autocomplete=off />
+        <input type="text" id="cardholderName" data-checkout="cardholderName" autocomplete=off />
+        <select id="docType" data-checkout="docType">
+            <option value="CPF" <?php if ($document_type == "CPF") {echo "selected";}?> >CPF</option>
+            <option value="CNPJ" <?php if ($document_type == "CNPJ") {echo "selected";}?> >CNPJ</option>
+        </select>
+        <input type="text" id="docNumber" value="<?php echo $document; ?>" data-checkout="docNumber" autocomplete=off /> <!-- manter só números -->
+        <input type="text" name="paymentMethodId" id="paymentMethodId" data-checkout="paymentMethodId" autocomplete=off /> <!-- bandeira -->
+        <input type="submit" value="submit" />
+    </form>
+</fieldset>
+
+<script type="text/javascript">
+    var prepareipagmp = function(){
+        Mercadopago.setPublishableKey("<?php echo trim($mercadopagotoken); ?>");
+        console.info('iPag.MP');
+
+        jQuery(document).ready(function(){
+            checkLength = function (obj, size) {
+                return (obj && obj.length > size);
+            }
+
+            var doc = '<?php echo $document; ?>';
+            doc = doc.replace(/[^0-9]/gi, '');
+            jQuery("#docNumber").val(doc);
+            if(checkLength(doc,11)){
+                jQuery("#docType").val("CNPJ");
+            }
+            else{
+                jQuery("#docType").val("CPF");
+            }
+
+            jQuery('#ipagcc_cc_cid').keyup(function(){
+                var value = jQuery(this).val();
+                jQuery("#securityCode").val(value);
+                validaMercadoPago();
+            });
+            jQuery('#ipagcc_cc_number').keyup(function(){
+                var value = jQuery(this).val();
+                jQuery("#cardNumber").val(value);
+                //se já recuperou o bin do cartão consulta a bandeira
+                if(checkLength(value,5)){
+                    Mercadopago.getPaymentMethod({
+                        "bin": value
+                    }, setPaymentMethodInfo);
+                }
+                validaMercadoPago();
+            });
+            jQuery('#ipagcc_expiration').change(function(){
+                var value = jQuery(this).val();
+                jQuery("#cardExpirationMonth").val(value);
+                validaMercadoPago();
+            });
+            jQuery('#ipagcc_expiration_yr').change(function(){
+                var value = jQuery(this).val();
+                jQuery("#cardExpirationYear").val(value);
+                validaMercadoPago();
+            });
+
+            jQuery('#ipagcc_fullname').keyup(function(){
+                var value = jQuery(this).val();
+                jQuery("#cardholderName").val(value);
+                validaMercadoPago();
+            });
+
+            function tokenMercadoPago(){
+                var form = document.querySelector('#ipag-pay-mercadopago');
+                Mercadopago.createToken(form, sdkResponseHandler);
+                return false;
+            };
+
+            validaMercadoPago = function() {
+                var cid = jQuery('#paymentMethodId').val();
+                var cvv = jQuery('#securityCode').val();
+                var number = jQuery('#cardNumber').val();
+                var month = jQuery('#cardExpirationMonth').val();
+                var year = jQuery('#cardExpirationYear').val();
+                var owner = jQuery('#cardholderName').val();
+                var doctype = jQuery('#docType').val();
+                var docnumber = jQuery('#docNumber').val();
+                if(checkLength(cid,2) && checkLength(cvv,2) && checkLength(number,10) && checkLength(month,0) && checkLength(year,0) && checkLength(owner,0)){
+                    tokenMercadoPago();
+                }
+                else{
+                    return false;
+                }
+            }
+
+            function sdkResponseHandler (status, response) {
+                console.log(status);
+                if (status != 200 && status != 201) {
+                    console.info('Try again!')
+                }else{
+                    console.info('OK!')
+                    jQuery('#ipagcc_mercadopago_token').val(response.id);
+                }
+            };
+
+            function setPaymentMethodInfo(status, response) {
+                if (status == 200) {
+                    console.info(response[0].id);
+                    jQuery('#paymentMethodId').val(response[0].id);
+                } else {
+                    console.info('CardBrand error!')
+                }
+            }
+        });
+    }
+</script>

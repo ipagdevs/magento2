@@ -191,6 +191,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 $InfoInstance = $this->getInfoInstance();
                 $cart = $this->_ipagHelper->addProductItemsIpag($ipag, $items);
                 $installments = $InfoInstance->getAdditionalInformation('installments');
+                $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
 
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
 
@@ -214,7 +215,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 }
                 $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
                 $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer,
-                    $additionalPrice, $installments);
+                    $additionalPrice, $installments, $fingerprint);
 
                 $quoteInstance = $this->_cart->getQuote()->getPayment();
                 $numero = $InfoInstance->getAdditionalInformation('cc_number');

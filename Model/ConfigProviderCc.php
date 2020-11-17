@@ -145,6 +145,7 @@ class ConfigProviderCc implements ConfigProviderInterface
                 $config['payment'][$code]['additional_amount'] = $this->getAdditionalAmount();
                 $config['payment'][$code]['additional_type'] = $this->getAdditionalType();
                 $config['payment'][$code]['image_cvv'] = $this->getCvvImg();
+                $config['payment'][$code]['mp_active'] = $this->getMpActive();
             }
         }
 
@@ -288,5 +289,12 @@ class ConfigProviderCc implements ConfigProviderInterface
         $environment = $this->scopeConfig->getValue('payment/ipagbase/environment_mode');
 
         return $environment;
+    }
+
+    public function getMpActive()
+    {
+        $mpactive = $this->scopeConfig->getValue('payment/ipagcc/mp_active');
+
+        return $mpactive;
     }
 }
