@@ -149,8 +149,9 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
             $InfoInstance = $this->getInfoInstance();
             $customer = $this->_ipagHelper->generateCustomerIpag($ipag, $order);
             $installments = $InfoInstance->getAdditionalInformation('installments');
+            $installment_active = $this->_ipagHelper->getParcelamentoBoleto();
 
-            if ($installments > 1) {
+            if ($installments > 1 && $installment_active) {
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceBoleto($order, $installments);
                 $total = $order->getGrandTotal() + $additionalPrice;
 

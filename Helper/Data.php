@@ -615,6 +615,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $semJuros;
     }
 
+    public function getParcelamentoBoleto()
+    {
+        $ativo = $this->_scopeConfig->getValue('payment/ipagboleto/installment/active');
+        return $ativo;
+    }
+
     public function getJurosBoleto()
     {
         $juros = $this->_scopeConfig->getValue('payment/ipagboleto/installment/interest');
