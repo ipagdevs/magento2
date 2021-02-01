@@ -39,6 +39,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $identification = $this->getIdentification();
         $apikey = $this->getApiKey();
         $env = $_environment === "production" ? Endpoint::PRODUCTION : Endpoint::SANDBOX;
+        $env = 'http://core.ipag.test';
 
         $auth = new Authentication($identification, $apikey);
         $ipag = new Ipag($auth, $env);
@@ -501,6 +502,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $payment = $ipag->payment()
             ->setMethod($method);
+
+        return $payment;
+    }
+
+    public function addPayPixIpag($ipag, $InfoInstance)
+    {
+        $payment = $ipag->payment()
+            ->setMethod('pix');
 
         return $payment;
     }

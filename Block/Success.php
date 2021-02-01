@@ -7,6 +7,7 @@ namespace Ipag\Payment\Block;
 
 use Magento\Customer\Model\Context;
 use Magento\Sales\Model\Order;
+use Endroid\QrCode\QrCode;
 
 class Success extends \Magento\Checkout\Block\Onepage\Success
 {
@@ -48,6 +49,33 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
         return $payment;
 
     }
+
+    public function getQrHelper($pix)
+    {
+        $qrCode = null;
+
+        if (!empty($pix)) {
+            $qrCode = new QrCode($pix);
+            $qrCode->setSize(200);
+        }
+
+        return $qrCode;
+    }
+
+    /**
+     * @return int
+     */
+    public function getGrandTotalFormatted()
+    {
+        $order = $this->getOrder();
+        $gt = $order->getGrandTotal();
+
+        $brl = 'R$';
+        $totalformatted = number_format($gt, '2', ',', '.');
+
+        return "$brl $totalformatted";
+    }
+
     public function getMethodCode()
     {
         $method = $this->getPayment()->getCode();

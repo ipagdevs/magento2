@@ -7,6 +7,9 @@
         <method name="ipagboleto">
             <allow_multiple_address>1</allow_multiple_address>
         </method>
+        <method name="ipagpix">
+            <allow_multiple_address>1</allow_multiple_address>
+        </method>
     </methods>
     <credit_cards>
         <type id="amex" order="0">

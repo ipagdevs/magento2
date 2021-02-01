@@ -5,6 +5,7 @@
             <argument name="configProviders" xsi:type="array">
                 <item name="ipagcc_config_provider" xsi:type="object">Ipag\Payment\Model\ConfigProviderCc</item>
                 <item name="ipagboleto_config_provider" xsi:type="object">Ipag\Payment\Model\ConfigProviderBoleto</item>
+                <item name="ipagpix_config_provider" xsi:type="object">Ipag\Payment\Model\ConfigProviderPix</item>
             </argument>
         </arguments>
     </type>

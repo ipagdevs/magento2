@@ -24,6 +24,9 @@ class AddExtraDataToTransport implements ObserverInterface
                 $order->setState(\Magento\Sales\Model\Order::STATE_NEW)->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
                 $order->save();
             }
+        } elseif ($method == 'ipagpix') {
+            $order->setState(\Magento\Sales\Model\Order::STATE_NEW)->setStatus($scopeConfig->getValue("payment/ipagpix/order_status", $storeScope));
+            $order->save();
         }
     }
 }

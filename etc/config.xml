@@ -59,6 +59,13 @@
                     <interest>0</interest>
                 </installment>
             </ipagboleto>
+            <ipagpix>
+                <model>Ipag\Payment\Model\Method\Pix</model>
+                <payment_action>authorize</payment_action>
+                <active>1</active>
+                <order_status>pending</order_status>
+                <title>Pix</title>
+            </ipagpix>
         </payment>
     </default>
 </config>
