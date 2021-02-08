@@ -39,7 +39,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $identification = $this->getIdentification();
         $apikey = $this->getApiKey();
         $env = $_environment === "production" ? Endpoint::PRODUCTION : Endpoint::SANDBOX;
-        $env = 'http://core.ipag.test';
 
         $auth = new Authentication($identification, $apikey);
         $ipag = new Ipag($auth, $env);
