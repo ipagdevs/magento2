@@ -37,6 +37,8 @@ $boletoUrl = $block->getLinkPrintPay();
     <?php endif;?>
 </table>
 
+<?php $_parcelas = $block->getParcelasCollection();?>
+<?php  if (!empty($_parcelas)) : ?>
 <div class="admin__table-wrapper">
     <table class="data-table admin__table-primary edit-order-table">
         <thead>
@@ -50,7 +52,6 @@ $lastItemNumber = count($columns)?>
                 <?php endforeach;?>
             </tr>
         </thead>
-        <?php $_parcelas = $block->getParcelasCollection();?>
         <?php $i = 0;foreach ($_parcelas as $_parcela): $i++?>
 	            <tbody class="<?=/* @noEscape */$i % 2 ? 'even' : 'odd'?>">
 	                <td class="col-parcela-number"><?=$block->getColumnHtml($_parcela, 'installment_number')?></td>
@@ -63,5 +64,5 @@ $lastItemNumber = count($columns)?>
 	        <?php endforeach;?>
     </table>
 </div>
-
+<?php endif; ?>
 <?=$block->getChildHtml()?>

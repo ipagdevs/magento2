@@ -118,9 +118,12 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                         }
                         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
                         $invoice->register();
+                        $invoice->save();
                         $invoice->getOrder()->setCustomerNoteNotify(false);
                         $invoice->getOrder()->setIsInProcess(true);
                         $order->addStatusHistoryComment('Automatically INVOICED', false);
+                        $order->setTotalPaid($response->amount);
+                        $order->setBaseTotalPaid($response->amount);
                         $transactionSave = $this->transactionFactory->create()->addObject($invoice)->addObject($invoice->getOrder());
                         $transactionSave->save();
 
@@ -130,8 +133,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                         } catch (\Exception $e) {
                             $this->messageManager->addError(__('We can\'t send the invoice email right now.'));
                         }
-                    } else {
-
+                    } elseif ($response->payment->status == '3') {
                         $this->orderManagement->cancel($order->getEntityId());
                     }
 
