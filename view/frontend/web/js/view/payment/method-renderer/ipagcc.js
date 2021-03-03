@@ -196,6 +196,66 @@ define(
 				return window.checkoutConfig.payment.ipagcc.mp_active;
 			}),
 
+			getVisualCreditCardActive: ko.computed(function () {
+				return window.checkoutConfig.payment.ipagcc.visual_cc_active;
+			}),
+
+			getCardImage: ko.computed(function () {
+				return require.toUrl('Ipag_Payment/images/cc/credit-card.png');
+			}),
+
+			getLogoActive: ko.computed(function () {
+				return window.checkoutConfig.payment.ipagcc.show_logo;
+			}),
+
+			getLogo: ko.computed(function () {
+				return require.toUrl('Ipag_Payment/images/cc/ipag.png');
+			}),
+
+			sendToCard: function (elementClass, uiclass, jqEvent) {
+				if (window.checkoutConfig.payment.ipagcc.visual_cc_active) {
+					var element = jqEvent.target;
+					var name = element.name;
+					var str = element.value;
+					if (str.length >= 1) {
+						if(element.id === 'ipagcc_expiration_yr' || element.id === 'ipagcc_expiration' ) {
+							if (str.length == 1) {
+								str = '0'+str;
+							}
+							jQuery('#card_container .ipagcc_expiry .'+elementClass).html(str);
+						} else {
+							jQuery('#card_container .'+elementClass).html(str);
+							if(name === 'cc_number') {
+								if (str.length >= 14 && str.length < 16) {
+									var card = [str.slice(0,4), str.slice(4,10), str.slice(10)];
+									jQuery('#card_container .'+elementClass).html(card.join(' '));
+								} else if(str.length == 16) {
+									var card = [str.slice(0,4), str.slice(4,8), str.slice(8,12), str.slice(12)];
+									jQuery('#card_container .'+elementClass).html(card.join(' '));
+								}
+							}
+						}
+					}
+				}
+			},
+
+			onFocusCvv: function() {
+				this.toggleVerso('add', 'card_container');
+			},
+
+			onBlurCvv: function() {
+				this.toggleVerso('remove', 'card_container');
+			},
+
+			toggleVerso: function (action, container) {
+				"use strict";
+				if (action === 'add') {
+					jQuery('#'+container).addClass('verso');
+				}else{
+					jQuery('#'+container).removeClass('verso');
+				}
+			},
+
 			getNumParcelas: function (total, maxp, minv) {
 				var nparc = maxp;
 				if (minv != '' && !isNaN(minv)) {

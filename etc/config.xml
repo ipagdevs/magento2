@@ -6,6 +6,7 @@
                 <title>Config Ipag</title>
                 <model>Ipag\Payment\Model\Method\Cc</model>
                 <environment_mode>production</environment_mode>
+                <show_logo>1</show_logo>
                 <advanced>
                     <title>Config Avançada</title>
                     <type_cpf>address</type_cpf>
@@ -41,6 +42,7 @@
                     <additional_amount>0</additional_amount>
                 </installment>
                 <mp_active>0</mp_active>
+                <visual_cc_active>0</visual_cc_active>
                 <mp_token></mp_token>
             </ipagcc>
             <ipagboleto>

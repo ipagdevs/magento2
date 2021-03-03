@@ -73,6 +73,14 @@ function (
             return(value/den);
         },
 
+        getLogo: ko.computed(function () {
+            return require.toUrl('Ipag_Payment/images/cc/ipag.png');
+        }),
+
+        getLogoActive: ko.computed(function () {
+            return window.checkoutConfig.payment.ipagcc.show_logo;
+        }),
+
         getInstall: function () {
             var valor = quote.totals().base_grand_total;
             //console.log(valor);

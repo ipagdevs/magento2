@@ -146,6 +146,8 @@ class ConfigProviderCc implements ConfigProviderInterface
                 $config['payment'][$code]['additional_type'] = $this->getAdditionalType();
                 $config['payment'][$code]['image_cvv'] = $this->getCvvImg();
                 $config['payment'][$code]['mp_active'] = $this->getMpActive();
+                $config['payment'][$code]['visual_cc_active'] = $this->getVisualCcActive();
+                $config['payment'][$code]['show_logo'] = $this->getIpagLogoActive();
             }
         }
 
@@ -296,5 +298,19 @@ class ConfigProviderCc implements ConfigProviderInterface
         $mpactive = $this->scopeConfig->getValue('payment/ipagcc/mp_active');
 
         return $mpactive;
+    }
+
+    public function getVisualCcActive()
+    {
+        $ccactive = $this->scopeConfig->getValue('payment/ipagcc/visual_cc_active');
+
+        return $ccactive;
+    }
+
+    public function getIpagLogoActive()
+    {
+        $logoactive = $this->scopeConfig->getValue('payment/ipagbase/show_logo');
+
+        return $logoactive;
     }
 }

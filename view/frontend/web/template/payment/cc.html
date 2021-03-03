@@ -6,7 +6,12 @@
                name="payment[method]"
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
-        <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
+        <label data-bind="attr: {'for': getCode()}" class="label">
+            <span data-bind="text: getTitle()"></span>
+            <!-- ko if: (getLogoActive() == 1) -->
+            <img data-bind="attr: {alt: 'iPag', src:getLogo()}" class="payment-icon ipag-payment-icon"/>
+            <!-- /ko -->
+        </label>
     </div>
     
     <div class="payment-method-content">
@@ -48,7 +53,20 @@
                             ">
                     </div>
                 </div>
-                 
+                
+                <!-- ko if: (getVisualCreditCardActive() == 1) -->
+                <div class="card_wrapper nofloat">
+                    <div id="card_container" class="card_container" data-bind="style: {'backgroundImage': 'url(' + getCardImage() + ')' }">
+                        <div class="ipagcc_cc_number anonymous">••••&nbsp; ••••&nbsp; ••••&nbsp; ••••</div>
+                        <div class="ipagcc_fullname">TITULAR DO CARTÃO</div>
+                        <div class="ipagcc_expiry"><span class="ipagcc-cc-month">• •</span> / <span class="ipagcc-cc-year">• • • •</span></div>
+                        <div class="ipagcc_brand"></div>
+                        <span class="ipagcc_cvv">•••</span>
+                    </div>
+                    <br/>
+                </div>
+                <!-- /ko -->
+
                 <div class="field number required">
                     
                     <label data-bind="attr: {for: getCode() + '_cc_number'}" class="label">
@@ -67,7 +85,8 @@
                                         'data-validate': JSON.stringify({'required-number':true, 'validate-card-type2':getCcAvailableTypesValues(), 'validate-card-number2':'#' + getCode() + '_cc_type', 'validate-cc-type2':'#' + getCode() + '_cc_type'})},
                                   enable: isActive($parents),
                                   value: creditCardNumber,
-                                  valueUpdate: 'keyup' "/>
+                                  valueUpdate: 'keyup',
+                                  event: { blur: sendToCard.bind(event, getCode() + '_cc_number') }"/>
                     </div>
                 </div>
 
@@ -82,7 +101,8 @@
                                                 id: getCode() + '_fullname',
                                                 title: $t('Card Holder Name'),
                                                 'data-container': getCode() + '-fullname',
-                                                'data-validate': JSON.stringify({'required':true})}"/>
+                                                'data-validate': JSON.stringify({'required':true})},
+                                                event: { blur: sendToCard.bind(event, getCode() + '_fullname') }"/>
                     </div>
                 </div>				
                 
@@ -102,7 +122,8 @@
                                                 optionsValue: 'value',
                                                 optionsText: 'month',
                                                 optionsCaption: $t('Month'),
-                                                value: creditCardExpMonth">
+                                                value: creditCardExpMonth,
+                                                event: { blur: sendToCard.bind(event, getCode() + '-cc-month') }">
                                     </select>
                                 </div>
                             </div>
@@ -116,7 +137,8 @@
                                                optionsValue: 'value',
                                                optionsText: 'year',
                                                optionsCaption: $t('Year'),
-                                               value: creditCardExpYear">
+                                               value: creditCardExpYear,
+                                               event: { blur: sendToCard.bind(event, getCode() + '-cc-year') }">
                                     </select>
                                 </div>
                             </div>
@@ -136,7 +158,8 @@
                                             'data-container': getCode() + '-cc-cvv',
                                             'data-validate': JSON.stringify({'required-number':true, 'validate-card-cvv2':'#' + getCode() + '_cc_type'})},
                                             enable: isActive($parents),
-                                            value: creditCardVerificationNumber" />
+                                            value: creditCardVerificationNumber,
+                                            event: { focus: onFocusCvv, blur: onBlurCvv }" />
                                     <div class="field-tooltip toggle">
                                         <span class="field-tooltip-action action-cvv"
                                               tabindex="0"

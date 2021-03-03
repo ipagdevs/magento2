@@ -1,0 +1,100 @@
+.card_wrapper {
+    width: 300px;
+    max-width: 100%;
+    height: 192px;
+    max-height: 194px;
+    text-align: center;
+    margin: 0px auto;
+    position: relative;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.card_wrapper .card_container {
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center top;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -o-perspective: 1000;
+    perspective: 1000;
+    height: 390px;
+    z-index: 50;
+}
+
+.card_wrapper .card_container>div.ipagcc_cc_number {
+    position: absolute;
+    z-index: 150;
+    top: 100px;
+    left: 30px;
+    color: #fff;
+    text-shadow: 1px 1px 1px #333;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Anonymous Pro';
+}
+
+.card_wrapper .card_container>div.ipagcc_fullname {
+    position: absolute;
+    z-index: 150;
+    top: 160px;
+    left: 15px;
+    color: #fff;
+    text-shadow: 1px 1px 1px #333;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 1px;
+    font-family: 'Anonymous Pro';
+    font-weight: bold;
+}
+
+.card_wrapper .card_container>div.ipagcc_expiry {
+    position: absolute;
+    z-index: 150;
+    top: 136px;
+    left: 160px;
+    color: #fff;
+    text-shadow: 1px 1px 1px #333;
+    font-family: 'Anonymous Pro';
+    font-size: 14px;
+}
+
+.card_wrapper .card_container>div.ipagcc_brand {
+    position: absolute;
+    z-index: 150;
+    top: 156px;
+    right: 6px;
+    display: block;
+    width: 60px;
+    max-width: 60px;
+    height: 40px;
+    max-height: 40px;
+    overflow: hidden;
+}
+
+.card_wrapper .card_container>span.ipagcc_cvv {
+    position: absolute;
+    display: none;
+    z-index: 150;
+    top: 97px;
+    right: 52px;
+    color: #333;
+}
+
+.card_wrapper .card_container.verso {
+    background-position: center -195px;
+}
+
+.card_wrapper .card_container.verso>div {
+    display: none;
+}
+
+.card_wrapper .card_container.verso>span.ipagcc_cvv {
+    display: block;
+}
+
+.ipag-payment-icon {
+    float: right;
+    height: 30px;
+    margin-top: -5px;
+}
