@@ -6,6 +6,7 @@ use Ipag\Classes\Services\CallbackService;
 use Ipag\Ipag;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Sales\Api\OrderManagementInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 
 //use Magento\Framework\App\RequestInterface;
@@ -27,6 +28,9 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
         \Psr\Log\LoggerInterface $logger,
         \Magento\Sales\Api\Data\OrderInterface $order,
         OrderManagementInterface $orderManagement,
+        OrderRepositoryInterface $orderRepository,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Ipag\Payment\Model\Source\OrderStatus $ipagOrderStatus,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
@@ -40,6 +44,9 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
         $this->_logger = $logger;
         $this->order = $order;
         $this->orderManagement = $orderManagement;
+        $this->orderRepository = $orderRepository;
+        $this->scopeConfig = $scopeConfig;
+        $this->ipagOrderStatus = $ipagOrderStatus;
         $this->invoiceSender = $invoiceSender;
         $this->_ipagHelper = $ipagHelper;
         $this->_ipagBoletoModel = $ipagBoletoModel;
@@ -106,8 +113,14 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                 } else {
                     // Verificar se a transação foi aprovada e capturada:
                     if ($response->payment->status == '8') {
+                        $items = $order->getAllItems();
+                        $qtys = array(); //this will be used for processing the invoice
+                        foreach($items as $item){
+                            $qty_to_invoice = $item->getQtyOrdered(); // now gets order quantity of item
+                            $qtys[$item->getId()] = $qty_to_invoice;
+                        }
 
-                        $invoice = $this->_invoiceService->prepareInvoice($order);
+                        $invoice = $this->_invoiceService->prepareInvoice($order, $qtys);
                         if (!$invoice) {
                             throw new \Magento\Framework\Exception\LocalizedException(__('We can\'t save the invoice right now.'));
                         }
@@ -118,12 +131,13 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                         }
                         $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
                         $invoice->register();
-                        $invoice->save();
+                        //$invoice->save();
                         $invoice->getOrder()->setCustomerNoteNotify(false);
                         $invoice->getOrder()->setIsInProcess(true);
                         $order->addStatusHistoryComment('Automatically INVOICED', false);
                         $order->setTotalPaid($response->amount);
                         $order->setBaseTotalPaid($response->amount);
+                        $order->save();
                         $transactionSave = $this->transactionFactory->create()->addObject($invoice)->addObject($invoice->getOrder());
                         $transactionSave->save();
 
@@ -133,8 +147,18 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                         } catch (\Exception $e) {
                             $this->messageManager->addError(__('We can\'t send the invoice email right now.'));
                         }
-                    } elseif ($response->payment->status == '3') {
-                        $this->orderManagement->cancel($order->getEntityId());
+                    } elseif ($response->payment->status == '3' || $response->payment->status == '7') {
+                        $order = $this->orderRepository->get($order->getEntityId());
+                        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+                        $state = $this->scopeConfig->getValue("payment/ipagcc/order_cancel", $storeScope);
+
+                        if (in_array($state, $this->ipagOrderStatus->getAvailableStatus())) {
+                            $order->setState($state);
+                            $order->setStatus($state);
+
+                            $order->addStatusHistoryComment('Order status UPDATED', false);
+                            $this->orderRepository->save($order);
+                        }
                     }
 
                     $order->addStatusHistoryComment(
@@ -147,6 +171,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
             }
         } catch (\Exception $e) {
 
+            echo $e->getMessage();
             $this->messageManager->addError($e->getMessage());
         }
 

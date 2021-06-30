@@ -254,16 +254,15 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                         $order->getStatus(),
                         'Seu cartão não pode ser processado, entre em contato conosco'
                     );
-                    $order->setState(\Magento\Sales\Model\Order::STATE_CANCELED);
-                    $order->save();
                     $payment->setIsTransactionPending(true);
-                    $order->cancel()->save();
                     //$payment->setIsFraudDetected(true);
 
                 } elseif (in_array($response->payment->status, $approvedStatuses) && $faturaAuto) {
                     $payment->setTransactionId($response->tid)
                         ->setIsTransactionClosed(1);
                 } else {
+                    $payment->setIsTransactionPending(true);
+                    $payment->setTransactionId($response->tid);
                     $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
                         ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
                     $order->save();

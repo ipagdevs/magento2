@@ -199,6 +199,10 @@
                     <label>Automatic Invoice</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="order_cancel" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Canceled Order Status</label>
+                    <source_model>Ipag\Payment\Model\Source\OrderStatus</source_model>
+                </field>
                 <group id="installment" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Configurações de parcelamento e juros</label>
                     <field id="type_interest" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
