@@ -158,6 +158,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
 
                             $order->addStatusHistoryComment('Order status UPDATED', false);
                             $this->orderRepository->save($order);
+                            $this->orderManagement->cancel($order->getEntityId());
                         }
                     }
 
