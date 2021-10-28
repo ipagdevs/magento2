@@ -8,6 +8,7 @@ namespace Ipag\Payment\Block;
 use Magento\Customer\Model\Context;
 use Magento\Sales\Model\Order;
 use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 
 class Success extends \Magento\Checkout\Block\Onepage\Success
 {
@@ -52,14 +53,22 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
 
     public function getQrHelper($pix)
     {
-        $qrCode = null;
-
+        $response = null;
+        
         if (!empty($pix)) {
-            $qrCode = new QrCode($pix);
-            $qrCode->setSize(200);
+            if (method_exists(QrCode::class, 'create')) {
+                $qr = QrCode::create($pix);
+                $writer = new PngWriter();
+                $result = $writer->write($qr);
+            
+                $response = $result->getDataUri();
+            } else {
+                $qrCode = new QrCode($pix);
+                $qrCode->setSize(200);
+                $response = $qrCode->writeDataUri();
+            }
         }
-
-        return $qrCode;
+        return $response;
     }
 
     /**

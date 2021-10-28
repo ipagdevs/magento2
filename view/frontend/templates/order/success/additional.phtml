@@ -18,14 +18,14 @@ else {
 <?php if($block->getMethodCode() === "ipagpix") : 
 	$qrCode = $block->getInfo('pix.qrCode');
 	$qrHelper = $block->getQrHelper($qrCode);
-	if ($qrHelper) : ?>
+	if (!empty($qrHelper)) : ?>
 		<div id="qr-info" class="col-md-6">
 			<div class="card card-default">
 				<div class="card-body">
 					<div class="text-center m-4">
 						<h3>Use o QR Code do Pix para pagar</h3>
 						<p>Abra o app em que vai fazer o pagamento, escaneie a imagem ou cole o código do QR Code</p>
-							<img class='rounded mw-100' src='<?php echo $qrHelper->writeDataUri()?> '/>
+							<img class='rounded mw-100' src='<?php echo $qrHelper?> '/>
 						<h3><?php echo $block->getGrandTotalFormatted(); ?></h3>
 						<button type="button" id="button-copy" class="action primary btn-pix boleto-ipag">Copiar código do QR Code</button>
 						<input type="hidden" id="brCode" value="<?php echo $qrCode; ?>">
