@@ -35,10 +35,11 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         \Ipag\Payment\Helper\Data $ipagHelper,
+        \Ipag\Payment\Logger\Logger $ipagLogger,
         \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments,
         \Magento\Framework\DB\TransactionFactory $transactionFactory
-
+        
     ) {
         $this->_invoiceService = $invoiceService;
         $this->_logger = $logger;
@@ -53,6 +54,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
         $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
         $this->productMetadata = $productMetadata;
         $this->transactionFactory = $transactionFactory;
+        $this->ipagLogger = $ipagLogger;
 
         parent::__construct($context);
 
@@ -113,32 +115,21 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                 } else {
                     // Verificar se a transação foi aprovada e capturada:
                     if ($response->payment->status == '8') {
-                        $items = $order->getAllItems();
-                        $qtys = array(); //this will be used for processing the invoice
-                        foreach($items as $item){
-                            $qty_to_invoice = $item->getQtyOrdered(); // now gets order quantity of item
-                            $qtys[$item->getId()] = $qty_to_invoice;
-                        }
-
-                        $invoice = $this->_invoiceService->prepareInvoice($order, $qtys);
-                        if (!$invoice) {
-                            throw new \Magento\Framework\Exception\LocalizedException(__('We can\'t save the invoice right now.'));
-                        }
-                        if (!$invoice->getTotalQty()) {
-                            throw new \Magento\Framework\Exception\LocalizedException(
-                                __('You can\'t create an invoice without products.')
-                            );
-                        }
-                        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+                        $invoice = $this->_invoiceService->prepareInvoice($order);
+                        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
                         $invoice->register();
-                        //$invoice->save();
+                        $invoice->pay();
+
                         $invoice->getOrder()->setCustomerNoteNotify(false);
                         $invoice->getOrder()->setIsInProcess(true);
+                        $invoice->save();
                         $order->addStatusHistoryComment('Automatically INVOICED', false);
                         $order->setTotalPaid($response->amount);
                         $order->setBaseTotalPaid($response->amount);
                         $order->save();
-                        $transactionSave = $this->transactionFactory->create()->addObject($invoice)->addObject($invoice->getOrder());
+                        $transactionSave = $this->transactionFactory->create();
+                        $transactionSave->addObject($invoice);
+                        $transactionSave->addObject($invoice->getOrder());
                         $transactionSave->save();
 
                         try {
@@ -162,8 +153,27 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                         }
                     }
 
+                    //atualização do orderInfo com a informação atualizada
+                    $json = json_decode(json_encode($response), true);
+                    $payment = $order->getPayment();
+                    $this->ipagLogger->loginfo([$response], self::class.' RESPONSE RAW');
+                    $this->ipagLogger->loginfo($json, self::class.' RESPONSE JSON');
+                    foreach ($json as $j => $k) {
+                        if (is_array($k)) {
+                            foreach ($k as $l => $m) {
+                                $name = $j.'.'.$l;
+                                $json[$name] = $m;
+                                $payment->setAdditionalInformation($name, $m);
+                            }
+                            unset($json[$j]);
+                        } else {
+                            $payment->setAdditionalInformation($j, $k);
+                        }
+                    }
+                    $order->save();
+
                     $order->addStatusHistoryComment(
-                        __('iPag response: Status: %1, Message: %2.', $response->payment->status,
+                        __('iPag callback: Status: %1, Message: %2.', $response->payment->status,
                             $response->payment->message)
                     )
                         ->setIsCustomerNotified(false)

@@ -116,13 +116,6 @@
                     <label>New Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
                 </field>
-                <field id="payment_action" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment Action</label>
-                    <source_model>Ipag\Payment\Model\Source\PaymentAction</source_model>
-                    <depends>
-                        <field id="order_status" separator=",">pending</field>
-                    </depends>
-                </field>
                 <field id="expiration" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Vencimento do Boleto</label>
                     <comment>em dias</comment>
@@ -187,17 +180,6 @@
                 <field id="order_status" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>New Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
-                </field>
-                <field id="payment_action" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment Action</label>
-                    <source_model>Ipag\Payment\Model\Source\PaymentAction</source_model>
-                    <depends>
-                        <field id="order_status" separator=",">pending</field>
-                    </depends>
-                </field>
-                <field id="automatic_invoice" translate="label" type="select" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Automatic Invoice</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="order_cancel" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Canceled Order Status</label>
@@ -270,13 +252,6 @@
                 <field id="order_status" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>New Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
-                </field>
-                <field id="payment_action" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment Action</label>
-                    <source_model>Ipag\Payment\Model\Source\PaymentAction</source_model>
-                    <depends>
-                        <field id="order_status" separator=",">pending</field>
-                    </depends>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sort Order</label>

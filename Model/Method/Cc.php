@@ -5,9 +5,10 @@ namespace Ipag\Payment\Model\Method;
 use Ipag\Ipag;
 use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Model\Method\Online\GatewayInterface;
 use \Magento\Sales\Model\Order\Payment;
 
-class Cc extends \Magento\Payment\Model\Method\Cc
+class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 {
     const ROUND_UP = 100;
 
@@ -46,6 +47,8 @@ class Cc extends \Magento\Payment\Model\Method\Cc
     protected $logger;
 
     protected $_infoBlockType = 'Ipag\Payment\Block\Info\Cc';
+
+    protected $_isInitializeNeeded = true;
 
     /**
      * Constructor
@@ -141,33 +144,33 @@ class Cc extends \Magento\Payment\Model\Method\Cc
         return $this;
     }
 
-    /**
-     * Payment authorize
-     *
-     * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param float $amount
-     * @return $this
-     * @throws \Magento\Framework\Validator\Exception
-     */
-    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        return $this->getTransaction($payment, $amount);
-    }
 
     /**
-     * Payment capture
-     *
-     * @param \Magento\Framework\DataObject|InfoInterface $payment
-     * @param float $amount
-     * @return $this
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @param string $paymentAction
+     * @param object $stateObject
+     * @return $this|bool|\Magento\Payment\Model\Method\Cc
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    public function initialize($paymentAction, $stateObject)
     {
-        return $this->getTransaction($payment, $amount);
+        try {
+            $order = $this->getInfoInstance()->getOrder();
+            $payment = $order->getPayment();
+            $this->processPayment($payment);
+        } catch (\Exception $e) {
+            $this->logger->loginfo(self::class." initialize ERROR: ".$e->getMessage(), self::class.' STATUS');
+            throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+        }
+    }
+    
+    /**
+     * {inheritdoc}
+     */
+    public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
+    {
+        return '';
     }
 
-    public function getTransaction($payment, $amount)
+    public function processPayment($payment)
     {
 
         $order = $payment->getOrder();
@@ -176,11 +179,6 @@ class Cc extends \Magento\Payment\Model\Method\Cc
         $pendingStatuses = [1, 2, 4];
 
         try {
-
-            if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for authorization.'));
-            }
-
             $ipag = $this->_ipagHelper->AuthorizationValidate();
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
@@ -201,10 +199,6 @@ class Cc extends \Magento\Payment\Model\Method\Cc
                 $order->setBaseTaxAmount($additionalPrice);
                 $order->setGrandTotal($total);
                 $order->setBaseGrandTotal($total);
-                $order->setBaseTotalInvoiced($total);
-                $order->setBaseSubTotalInvoiced($total);
-                $order->setSubTotalInvoiced($total);
-                $order->setTotalInvoiced($total);
 
                 if ($additionalPrice >= 0.01) {
                     $brl = 'R$';
@@ -245,29 +239,19 @@ class Cc extends \Magento\Payment\Model\Method\Cc
 
                 $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                 $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                $faturaAuto = $scopeConfig->getValue("payment/ipagcc/automatic_invoice");
-                if (in_array($response->payment->status, $failedStatuses)) {
-                    $orderId = $order->getId();
-                    $payment->setSkipTransactionCreation(true);
-                    //throw new \Magento\Framework\Validator\Exception(__($errorMsg));
-                    $order->addStatusToHistory(
-                        $order->getStatus(),
-                        'Seu cartão não pode ser processado, entre em contato conosco'
-                    );
-                    $payment->setIsTransactionPending(true);
-                    //$payment->setIsFraudDetected(true);
+                $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                    ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
 
-                } elseif (in_array($response->payment->status, $approvedStatuses) && $faturaAuto) {
-                    $payment->setTransactionId($response->tid)
-                        ->setIsTransactionClosed(1);
-                } else {
-                    $payment->setIsTransactionPending(true);
-                    $payment->setTransactionId($response->tid);
-                    $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
-                        ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
-                    $order->save();
+                if (!is_null($response)) {
+                    $order->addStatusHistoryComment(
+                        __('iPag response: Status: %1, Message: %2.', $response->payment->status,
+                            $response->payment->message)
+                    )->setIsCustomerNotified(false);
                 }
+                $order->save();
 
+                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
+                $this->logger->loginfo($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope), self::class.' STATUS');
             } catch (\Exception $e) {
                 throw new LocalizedException(__('Payment failed '.$e->getMessage()));
             }
@@ -285,5 +269,4 @@ class Cc extends \Magento\Payment\Model\Method\Cc
         }
         return true;
     }
-
 }

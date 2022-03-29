@@ -6,9 +6,10 @@ use GuzzleHttp\Psr7\Request;
 use Ipag\Ipag;
 use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
+use Magento\Payment\Model\Method\Online\GatewayInterface;
 use \Magento\Sales\Model\Order\Payment;
 
-class Boleto extends \Magento\Payment\Model\Method\Cc
+class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 {
     const ROUND_UP = 100;
     protected $_canAuthorize = true;
@@ -27,6 +28,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
     protected $_ipagHelper;
     protected $logger;
     protected $_infoBlockType = 'Ipag\Payment\Block\Info\Boleto';
+    protected $_isInitializeNeeded = true;
     protected $_ipagInvoiceInstallments;
     protected $_storeManager;
     protected $_date;
@@ -125,24 +127,42 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
     }
 
     /**
+     * @param string $paymentAction
+     * @param object $stateObject
+     * @return $this|bool|\Magento\Payment\Model\Method\Cc
+     */
+    public function initialize($paymentAction, $stateObject)
+    {
+        try {
+            $order = $this->getInfoInstance()->getOrder();
+            $payment = $order->getPayment();
+            $this->processPayment($payment);
+        } catch (\Exception $e) {
+            $this->logger->loginfo(self::class." initialize ERROR: ".$e->getMessage(), self::class.' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException($e->getMessage());
+        }
+    }
+    
+    /**
+     * {inheritdoc}
+     */
+    public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
+    {
+        return '';
+    }
+
+    /**
      * Payment authorize
      *
      * @param \Magento\Payment\Model\InfoInterface $payment
-     * @param float $amount
      * @return $this
      * @throws \Magento\Framework\Validator\Exception
      */
-    public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    public function processPayment(\Magento\Payment\Model\InfoInterface $payment)
     {
-        //parent::authorize($payment, $amount);
         $order = $payment->getOrder();
 
         try {
-
-            if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for authorization.'));
-            }
-
             $ipag = $this->_ipagHelper->AuthorizationValidate();
 
             $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
@@ -248,23 +268,23 @@ class Boleto extends \Magento\Payment\Model\Method\Cc
                         }
                     }
 
-                    /*$payment->setTransactionId($response->tid)
-                        ->setIsTransactionClosed(0)
-                        ->setTransactionAdditionalInfo(\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS, $json);*/
-                } catch (\Exception $e) {
-                    throw new LocalizedException(__('Payment failed '.$e->getMessage()));
-                }
-
-                if ($response->payment->status != 8) {
-                    $orderId = $order->getId();
                     $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                     $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
                     $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
                         ->setStatus($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope));
-                    $order->save();
-                    $payment->setIsTransactionPending(true);
+
                     $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
                     $this->logger->loginfo($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope), self::class.' STATUS');
+
+                    if (!is_null($response)) {
+                        $order->addStatusHistoryComment(
+                            __('iPag response: Status: %1, Message: %2.', $response->payment->status,
+                                $response->payment->message)
+                        )->setIsCustomerNotified(false);
+                    }
+                    $order->save();
+                } catch (\Exception $e) {
+                    throw new LocalizedException(__('Payment failed '.$e->getMessage()));
                 }
             }
         } catch (\Exception $e) {
