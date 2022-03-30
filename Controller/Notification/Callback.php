@@ -115,28 +115,32 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                 } else {
                     // Verificar se a transação foi aprovada e capturada:
                     if ($response->payment->status == '8') {
-                        $invoice = $this->_invoiceService->prepareInvoice($order);
-                        $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
-                        $invoice->register();
-                        $invoice->pay();
+                        if (!$order->hasInvoices()) {
+                            $invoice = $this->_invoiceService->prepareInvoice($order);
+                            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
+                            $invoice->register();
+                            $invoice->pay();
 
-                        $invoice->getOrder()->setCustomerNoteNotify(false);
-                        $invoice->getOrder()->setIsInProcess(true);
-                        $invoice->save();
-                        $order->addStatusHistoryComment('Automatically INVOICED', false);
-                        $order->setTotalPaid($response->amount);
-                        $order->setBaseTotalPaid($response->amount);
-                        $order->save();
-                        $transactionSave = $this->transactionFactory->create();
-                        $transactionSave->addObject($invoice);
-                        $transactionSave->addObject($invoice->getOrder());
-                        $transactionSave->save();
-
-                        try {
-                            //send e-mail
-                            $this->invoiceSender->send($invoice);
-                        } catch (\Exception $e) {
-                            $this->messageManager->addError(__('We can\'t send the invoice email right now.'));
+                            $invoice->getOrder()->setCustomerNoteNotify(false);
+                            $invoice->getOrder()->setIsInProcess(true);
+                            $invoice->save();
+                            $order->addStatusHistoryComment('Automatically INVOICED', false);
+                            $order->setTotalPaid($response->amount);
+                            $order->setBaseTotalPaid($response->amount);
+                            $order->save();
+                            $transactionSave = $this->transactionFactory->create();
+                            $transactionSave->addObject($invoice);
+                            $transactionSave->addObject($invoice->getOrder());
+                            $transactionSave->save();
+                            
+                            try {
+                                //send e-mail
+                                $this->invoiceSender->send($invoice);
+                            } catch (\Exception $e) {
+                                $this->messageManager->addError(__('We can\'t send the invoice email right now.'));
+                            }
+                        } else {
+                            $order->addStatusHistoryComment('Order already have an invoice!', false);
                         }
                     } elseif ($response->payment->status == '3' || $response->payment->status == '7') {
                         $order = $this->orderRepository->get($order->getEntityId());

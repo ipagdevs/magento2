@@ -262,6 +262,47 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 
     }
 
+    /**
+     * Capture payment online
+     *
+     * @param \Magento\Framework\DataObject|InfoInterface $payment
+     * @param float $amount
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) 
+    {
+        try {
+            $order = $payment->getOrder();
+            $ipag = $this->_ipagHelper->AuthorizationValidate();
+            $tid = $payment->getAdditionalInformation('tid');
+            $status = $payment->getAdditionalInformation('payment.status');
+            if (!is_null($tid)) {
+                if ($status == '5') {
+                    $transaction = $ipag->transaction()->setTid($tid);
+                    if ($amount > 0 && $amount != $order->getGrandTotal()) {
+                        $transaction->setAmount($amount);
+                    }
+                    $response = $transaction->capture();
+                    if (!empty($response->errorMessage)) {
+                        throw new \Exception($response->errorMessage);
+                    }
+                    if ($response->payment->status != '8') {
+                        throw new \Exception('Ocorreu um erro na captura, por favor, verifique a transação no Painel iPag');
+                    }
+                } else {
+                    throw new \Exception('O status do pagamento não permite captura online! Tente capturar offline');
+                }
+            } else {
+                throw new \Exception('TID não encontrado! Tente capturar offline!');
+            }
+        } catch (\Exception $e) {
+            throw new LocalizedException(__('Capture Online Error: '.$e->getMessage()));
+        }
+        
+        return $this;
+    }
+
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         if (!$this->isActive($quote ? $quote->getStoreId() : null)) {
