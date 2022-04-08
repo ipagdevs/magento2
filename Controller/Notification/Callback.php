@@ -81,13 +81,18 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
     {
         $this->_logger->debug("entrou na capture");
         $ipag = $this->_ipagHelper->AuthorizationValidate();
-        $response = file_get_contents('php://input');
+        $tid = $_REQUEST['id_transacao'];
 
-        $callbackService = new CallbackService();
-
+        if (!empty($tid)) {
+            $response = $ipag->transaction()->setTid($tid)->consult();
+        } else {
+            $response = file_get_contents('php://input');
+            $callbackService = new CallbackService();
+            $response = $callbackService->getResponse($response);
+        }
+        
         // $response conterá os dados de retorno do iPag
         // $postContent deverá conter o XML enviado pelo iPag
-        $response = $callbackService->getResponse($response);
 
         // Verificar se o retorno tem erro
         if (!empty($response->error)) {

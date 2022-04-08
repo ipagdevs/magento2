@@ -194,6 +194,10 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
 
                 $total = $order->getGrandTotal() + $additionalPrice;
+                
+                $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
+                $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer,
+                    $additionalPrice, $installments, $fingerprint);
 
                 $order->setTaxAmount($additionalPrice);
                 $order->setBaseTaxAmount($additionalPrice);
@@ -207,9 +211,6 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                     $InfoInstance->setAdditionalInformation('interest', $brl.$formatted);
                     $InfoInstance->setAdditionalInformation('total_with_interest', $brl.$totalformatted);
                 }
-                $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
-                $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer,
-                    $additionalPrice, $installments, $fingerprint);
 
                 $quoteInstance = $this->_cart->getQuote()->getPayment();
                 $numero = $InfoInstance->getAdditionalInformation('cc_number');
