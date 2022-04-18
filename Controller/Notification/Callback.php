@@ -81,9 +81,9 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
     {
         $this->_logger->debug("entrou na capture");
         $ipag = $this->_ipagHelper->AuthorizationValidate();
-        $tid = $_REQUEST['id_transacao'];
 
-        if (!empty($tid)) {
+        if (array_key_exists('id_transacao', $_REQUEST)) {
+            $tid = $_REQUEST['id_transacao'];
             $response = $ipag->transaction()->setTid($tid)->consult();
         } else {
             $response = file_get_contents('php://input');
