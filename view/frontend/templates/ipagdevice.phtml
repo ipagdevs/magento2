@@ -1,0 +1,29 @@
+<script type="text/javascript">
+    // standard config variables
+    var io_install_flash = false;
+    var io_install_stm = false;
+    var io_exclude_stm = 12;
+    var io_enable_rip = true;
+
+    // third party callback function
+    var io_bb_callback = function(bb, complete) {
+        var fields = document.getElementsByName("device_fingerprint");
+        var i = 0;
+        for (i = 0; i < fields.length; i++)
+            fields[i].value = bb;
+    };
+
+    var manual_bb_callback = function() {
+        if (typeof ioGetBlackbox !== 'function') {
+            return;
+        }
+
+        var bbData = ioGetBlackbox();
+        if (bbData.finished) {
+            var fields = document.getElementsByName("device_fingerprint");
+            var i = 0;
+            for (i = 0; i < fields.length; i++)
+                fields[i].value = bbData.blackbox;
+        }
+    }
+</script>

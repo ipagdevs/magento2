@@ -24,8 +24,12 @@ define(
 			}),
 
 			getLogoActive: ko.computed(function () {
-				return window.checkoutConfig.payment.ipagcc.show_logo;
+				return window.checkoutConfig.payment.ipagpix.show_logo;
 			}),
+
+            isActive: function () {
+				return true;
+			},
         });
     }
 );

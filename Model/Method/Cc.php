@@ -117,7 +117,6 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
         $this->_transaction = $transaction;
         $this->_invoiceService = $invoiceService;
         $this->orderManagement = $orderManagement;
-
     }
 
     public function assignData(\Magento\Framework\DataObject $data)
@@ -157,11 +156,11 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
             $payment = $order->getPayment();
             $this->processPayment($payment);
         } catch (\Exception $e) {
-            $this->logger->loginfo(self::class." initialize ERROR: ".$e->getMessage(), self::class.' STATUS');
-            throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
+            throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
         }
     }
-    
+
     /**
      * {inheritdoc}
      */
@@ -190,14 +189,24 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 $cart = $this->_ipagHelper->addProductItemsIpag($ipag, $items);
                 $installments = $InfoInstance->getAdditionalInformation('installments');
                 $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
+                $deviceFingerprint = $InfoInstance->getAdditionalInformation('device_fingerprint');
 
                 $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
 
                 $total = $order->getGrandTotal() + $additionalPrice;
-                
+
                 $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
-                $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer,
-                    $additionalPrice, $installments, $fingerprint);
+                $ipagOrder = $this->_ipagHelper->createOrderIpag(
+                    $order,
+                    $ipag,
+                    $cart,
+                    $ipagPayment,
+                    $customer,
+                    $additionalPrice,
+                    $installments,
+                    $fingerprint,
+                    $deviceFingerprint
+                );
 
                 $order->setTaxAmount($additionalPrice);
                 $order->setBaseTaxAmount($additionalPrice);
@@ -208,27 +217,29 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                     $brl = 'R$';
                     $formatted = number_format($additionalPrice, '2', ',', '.');
                     $totalformatted = number_format($total, '2', ',', '.');
-                    $InfoInstance->setAdditionalInformation('interest', $brl.$formatted);
-                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl.$totalformatted);
+                    $InfoInstance->setAdditionalInformation('interest', $brl . $formatted);
+                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl . $totalformatted);
                 }
 
                 $quoteInstance = $this->_cart->getQuote()->getPayment();
                 $numero = $InfoInstance->getAdditionalInformation('cc_number');
                 $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
-                $quoteInstance->setAdditionalInformation('cc_number',
-                    preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero));
+                $quoteInstance->setAdditionalInformation(
+                    'cc_number',
+                    preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero)
+                );
                 $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
 
-                $this->logger->loginfo($ipagOrder, self::class.' REQUEST');
+                $this->logger->loginfo($ipagOrder, self::class . ' REQUEST');
                 $response = $ipag->transaction()->setOrder($ipagOrder)->execute();
 
                 $json = json_decode(json_encode($response), true);
-                $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
-                $this->logger->loginfo($json, self::class.' RESPONSE JSON');
+                $this->logger->loginfo([$response], self::class . ' RESPONSE RAW');
+                $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
                 foreach ($json as $j => $k) {
                     if (is_array($k)) {
                         foreach ($k as $l => $m) {
-                            $name = $j.'.'.$l;
+                            $name = $j . '.' . $l;
                             $json[$name] = $m;
                             $InfoInstance->setAdditionalInformation($name, $m);
                         }
@@ -245,22 +256,24 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 
                 if (!is_null($response)) {
                     $order->addStatusHistoryComment(
-                        __('iPag response: Status: %1, Message: %2.', $response->payment->status,
-                            $response->payment->message)
+                        __(
+                            'iPag response: Status: %1, Message: %2.',
+                            $response->payment->status,
+                            $response->payment->message
+                        )
                     )->setIsCustomerNotified(false);
                 }
                 $order->save();
 
-                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
-                $this->logger->loginfo($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope), self::class.' STATUS');
+                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class . ' STATUS');
+                $this->logger->loginfo($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope), self::class . ' STATUS');
             } catch (\Exception $e) {
-                throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+                throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
             }
         } catch (\Exception $e) {
-            throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+            throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
         }
         return $this;
-
     }
 
     /**
@@ -271,7 +284,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
      * @return $this
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount) 
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         try {
             $order = $payment->getOrder();
@@ -298,9 +311,9 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 throw new \Exception('TID não encontrado! Tente capturar offline!');
             }
         } catch (\Exception $e) {
-            throw new LocalizedException(__('Capture Online Error: '.$e->getMessage()));
+            throw new LocalizedException(__('Capture Online Error: ' . $e->getMessage()));
         }
-        
+
         return $this;
     }
 

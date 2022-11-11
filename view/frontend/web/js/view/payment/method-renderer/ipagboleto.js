@@ -78,7 +78,7 @@ function (
         }),
 
         getLogoActive: ko.computed(function () {
-            return window.checkoutConfig.payment.ipagcc.show_logo;
+            return window.checkoutConfig.payment.ipagboleto.show_logo;
         }),
 
         getInstall: function () {
@@ -188,6 +188,9 @@ function (
             };
         },
 
+        isActive: function () {
+            return true;
+        },
     });
 }
 );

@@ -1,4 +1,5 @@
 <?php
+
 namespace Ipag\Payment\Model\Method;
 
 use GuzzleHttp\Client;
@@ -138,11 +139,11 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
             $payment = $order->getPayment();
             $this->processPayment($payment);
         } catch (\Exception $e) {
-            $this->logger->loginfo(self::class." initialize ERROR: ".$e->getMessage(), self::class.' STATUS');
-            throw new \Magento\Framework\Exception\LocalizedException($e->getMessage());
+            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
         }
     }
-    
+
     /**
      * {inheritdoc}
      */
@@ -184,15 +185,15 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     $brl = 'R$';
                     $formatted = number_format($additionalPrice, '2', ',', '.');
                     $totalformatted = number_format($total, '2', ',', '.');
-                    $InfoInstance->setAdditionalInformation('interest', $brl.$formatted);
-                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl.$totalformatted);
+                    $InfoInstance->setAdditionalInformation('interest', $brl . $formatted);
+                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl . $totalformatted);
                 }
-                $description = "Pedido #".$order->getIncrementId();
+                $description = "Pedido #" . $order->getIncrementId();
                 $response = $this->generateInvoice($ipag, $customer, $total, $installments, $description);
 
                 $json = json_decode($response, true);
-                $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
-                $this->logger->loginfo($json, self::class.' RESPONSE JSON');
+                $this->logger->loginfo([$response], self::class . ' RESPONSE RAW');
+                $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
                 $parcelas = [];
                 if (is_array($json) || (is_object($json) && ($json instanceof \Traversable))) {
                     foreach ($json as $j => $k) {
@@ -203,23 +204,23 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                                         if (is_array($o)) {
                                             foreach ($o as $p => $q) {
                                                 if (is_array($q)) {
-                                                    if ($j.'.'.$l.'.'.$n === 'attributes.installments.data') {
+                                                    if ($j . '.' . $l . '.' . $n === 'attributes.installments.data') {
                                                         $parcelas[] = $q;
                                                     }
                                                     $q = json_encode($q);
                                                 }
-                                                $name = $j.'.'.$l.'.'.$n.'.'.$p;
+                                                $name = $j . '.' . $l . '.' . $n . '.' . $p;
                                                 $json[$name] = $q;
                                                 $InfoInstance->setAdditionalInformation($name, $q);
                                             }
                                         } else {
-                                            $name = $j.'.'.$l.'.'.$n;
+                                            $name = $j . '.' . $l . '.' . $n;
                                             $json[$name] = $o;
                                             $InfoInstance->setAdditionalInformation($name, $o);
                                         }
                                     }
                                 } else {
-                                    $name = $j.'.'.$l;
+                                    $name = $j . '.' . $l;
                                     $json[$name] = $m;
                                     $InfoInstance->setAdditionalInformation($name, $m);
                                 }
@@ -236,7 +237,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                         ->setTransactionAdditionalInfo(\Magento\Sales\Model\Order\Payment\Transaction::RAW_DETAILS, $json);
                 }
 
-                $this->logger->loginfo($parcelas, self::class.' INSTALLMENTS');
+                $this->logger->loginfo($parcelas, self::class . ' INSTALLMENTS');
                 if (!empty($parcelas)) {
                     $this->_ipagInvoiceInstallments->import($parcelas, $order->getIncrementId(), $json['id']);
                 }
@@ -249,16 +250,16 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     $ipagPayment = $this->_ipagHelper->addPayBoletoIpag($ipag, $InfoInstance);
                     $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer, 0, 1);
 
-                    $this->logger->loginfo($ipagOrder, self::class.' REQUEST');
+                    $this->logger->loginfo($ipagOrder, self::class . ' REQUEST');
                     $response = $ipag->transaction()->setOrder($ipagOrder)->execute();
 
                     $json = json_decode(json_encode($response), true);
-                    $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
-                    $this->logger->loginfo($json, self::class.' RESPONSE JSON');
+                    $this->logger->loginfo([$response], self::class . ' RESPONSE RAW');
+                    $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
                     foreach ($json as $j => $k) {
                         if (is_array($k)) {
                             foreach ($k as $l => $m) {
-                                $name = $j.'.'.$l;
+                                $name = $j . '.' . $l;
                                 $json[$name] = $m;
                                 $InfoInstance->setAdditionalInformation($name, $m);
                             }
@@ -273,22 +274,25 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
                         ->setStatus($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope));
 
-                    $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
-                    $this->logger->loginfo($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope), self::class.' STATUS');
+                    $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class . ' STATUS');
+                    $this->logger->loginfo($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope), self::class . ' STATUS');
 
                     if (!is_null($response)) {
                         $order->addStatusHistoryComment(
-                            __('iPag response: Status: %1, Message: %2.', $response->payment->status,
-                                $response->payment->message)
+                            __(
+                                'iPag response: Status: %1, Message: %2.',
+                                $response->payment->status,
+                                $response->payment->message
+                            )
                         )->setIsCustomerNotified(false);
                     }
                     $order->save();
                 } catch (\Exception $e) {
-                    throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+                    throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
                 }
             }
         } catch (\Exception $e) {
-            throw new LocalizedException(__('Payment failed '.$e->getMessage()));
+            throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
         }
         return $this;
     }
@@ -315,14 +319,14 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                 ],
             ],
         ];
-        $this->logger->loginfo($payload, self::class.' REQUEST CUSTOMER');
+        $this->logger->loginfo($payload, self::class . ' REQUEST CUSTOMER');
         $client = new Client(["base_uri" => $ipag->getEndpoint()->getUrl()]);
         $response = $client->request('POST', 'service/resources/customers', $payload);
 
         $responseBody = $response->getBody()->getContents();
         $statusCode = $response->getStatusCode();
 
-        $this->logger->loginfo([$responseBody], self::class.' RESPONSE CUSTOMER');
+        $this->logger->loginfo([$responseBody], self::class . ' RESPONSE CUSTOMER');
 
         if ($statusCode == 201) {
             $responseArray = json_decode($responseBody, true);
@@ -347,12 +351,12 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     "installments"  => $installments,
                 ],
             ];
-            $this->logger->loginfo($payloadInvoice, self::class.' REQUEST INVOICE');
+            $this->logger->loginfo($payloadInvoice, self::class . ' REQUEST INVOICE');
 
             $response = $client->request('POST', 'service/resources/invoices', $payloadInvoice);
             $responseBody = $response->getBody()->getContents();
 
-            $this->logger->loginfo([$responseBody], self::class.' RESPONSE INVOICE');
+            $this->logger->loginfo([$responseBody], self::class . ' RESPONSE INVOICE');
 
             return $responseBody;
         } else {
@@ -383,7 +387,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
     public function getCallbackUrl()
     {
         $baseUrl = $this->_storeManager->getStore()->getBaseUrl();
-        return $baseUrl.'ipag/notification/Callback';
+        return $baseUrl . 'ipag/notification/Callback';
     }
 
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)

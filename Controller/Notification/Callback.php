@@ -13,7 +13,7 @@ use Magento\Sales\Model\Order;
 //use Magento\Framework\App\Request\InvalidRequestException;
 //use Magento\Framework\App\CsrfAwareActionInterface;
 
-class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwareActionInterface
+class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwareActionInterface
 {
     protected $_logger;
 
@@ -39,7 +39,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
         \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments,
         \Magento\Framework\DB\TransactionFactory $transactionFactory
-        
+
     ) {
         $this->_invoiceService = $invoiceService;
         $this->_logger = $logger;
@@ -90,7 +90,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
             $callbackService = new CallbackService();
             $response = $callbackService->getResponse($response);
         }
-        
+
         // $response conterá os dados de retorno do iPag
         // $postContent deverá conter o XML enviado pelo iPag
 
@@ -116,7 +116,6 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                     $response = json_decode(json_encode($response), true);
 
                     $this->_ipagInvoiceInstallments->import($response, $order_id, $ipag_id);
-
                 } else {
                     // Verificar se a transação foi aprovada e capturada:
                     if ($response->payment->status == '8') {
@@ -137,7 +136,7 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                             $transactionSave->addObject($invoice);
                             $transactionSave->addObject($invoice->getOrder());
                             $transactionSave->save();
-                            
+
                             try {
                                 //send e-mail
                                 $this->invoiceSender->send($invoice);
@@ -158,19 +157,19 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
 
                             $order->addStatusHistoryComment('Order status UPDATED', false);
                             $this->orderRepository->save($order);
-                            $this->orderManagement->cancel($order->getEntityId());
                         }
+                        $this->orderManagement->cancel($order->getEntityId());
                     }
 
                     //atualização do orderInfo com a informação atualizada
                     $json = json_decode(json_encode($response), true);
                     $payment = $order->getPayment();
-                    $this->ipagLogger->loginfo([$response], self::class.' RESPONSE RAW');
-                    $this->ipagLogger->loginfo($json, self::class.' RESPONSE JSON');
+                    $this->ipagLogger->loginfo([$response], self::class . ' RESPONSE RAW');
+                    $this->ipagLogger->loginfo($json, self::class . ' RESPONSE JSON');
                     foreach ($json as $j => $k) {
                         if (is_array($k)) {
                             foreach ($k as $l => $m) {
-                                $name = $j.'.'.$l;
+                                $name = $j . '.' . $l;
                                 $json[$name] = $m;
                                 $payment->setAdditionalInformation($name, $m);
                             }
@@ -182,8 +181,11 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
                     $order->save();
 
                     $order->addStatusHistoryComment(
-                        __('iPag callback: Status: %1, Message: %2.', $response->payment->status,
-                            $response->payment->message)
+                        __(
+                            'iPag callback: Status: %1, Message: %2.',
+                            $response->payment->status,
+                            $response->payment->message
+                        )
                     )
                         ->setIsCustomerNotified(false)
                         ->save();
@@ -194,6 +196,5 @@ class Callback extends \Magento\Framework\App\Action\Action//implements CsrfAwar
             echo $e->getMessage();
             $this->messageManager->addError($e->getMessage());
         }
-
     }
 }

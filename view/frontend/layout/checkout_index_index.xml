@@ -60,6 +60,7 @@
         </referenceBlock>
         <referenceContainer name="after.body.start">
             <block class="Magento\Framework\View\Element\Template" name="beforebody" template="Ipag_Payment::prepareipag.phtml" />
+            <block class="Magento\Framework\View\Element\Template" name="ipagdevice" template="Ipag_Payment::ipagdevice.phtml" />
         </referenceContainer>
     </body>
 </page>

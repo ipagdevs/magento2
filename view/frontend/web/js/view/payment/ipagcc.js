@@ -2,7 +2,8 @@ define(
     [
         'uiComponent',
         'Magento_Checkout/js/model/payment/renderer-list',
-        'MPipag'
+        'MPipag',
+        'BBipag'
     ],
     function (
         Component,

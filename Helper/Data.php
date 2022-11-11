@@ -1,4 +1,5 @@
 <?php
+
 namespace Ipag\Payment\Helper;
 
 use Ipag\Classes\Authentication;
@@ -52,7 +53,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($type_cpf === "customer") {
             $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
-            $_taxvat = $quote->getData('customer_'.$attribute_cpf_customer);
+            $_taxvat = $quote->getData('customer_' . $attribute_cpf_customer);
             if (empty($_taxvat) && !empty($customerData)) {
                 if (array_key_exists($attribute_cpf_customer, $customerData)) {
                     $_taxvat = $customerData[$attribute_cpf_customer];
@@ -63,7 +64,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $_taxvat = $quote->getBillingAddress()->getData($attribute_cpf_address);
         }
 
-        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
 
         $type_cnpj = $this->getTypeForCNPJ();
 
@@ -75,7 +76,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $quote->getData('customer_'.$attribute_name);
+                    $name = $quote->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -85,14 +86,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $quote->getBillingAddress()->getData($attribute_name);
                 }
-
             } else {
                 $_typedocument = "CPF";
             }
-
         } elseif ($type_cnpj === "use_customer") {
             $attribute_cnpj = $this->getCNPJAttributeForCustomer();
-            $_taxvat = $quote->getData('customer_'.$attribute_cnpj);
+            $_taxvat = $quote->getData('customer_' . $attribute_cnpj);
             if (empty($_taxvat) && !empty($customerData)) {
                 if (array_key_exists($attribute_cnpj, $customerData)) {
                     $_taxvat = $customerData[$attribute_cnpj];
@@ -103,7 +102,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $type_name_company = $this->getTypeNameCompany();
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $quote->getData('customer_'.$attribute_name);
+                    $name = $quote->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -113,7 +112,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $quote->getBillingAddress()->getData($attribute_name);
                 }
-
             }
         } elseif ($type_cnpj === "use_address") {
             $attribute_cnpj_address = $this->getCNPJAttributeForAddress();
@@ -123,7 +121,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $type_name_company = $this->getTypeNameCompany();
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $quote->getData('customer_'.$attribute_name);
+                    $name = $quote->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -136,7 +134,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
 
         return $taxvat;
     }
@@ -149,14 +147,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$order->getCustomerFirstname()) {
             $name = $order->getBillingAddress()->getName();
         } else {
-            $name = $order->getCustomerFirstname().' '.$order->getCustomerLastname();
+            $name = $order->getCustomerFirstname() . ' ' . $order->getCustomerLastname();
         }
 
         $type_cpf = $this->getTypeForCpf();
 
         if ($type_cpf === "customer") {
             $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
-            $_taxvat = $order->getData('customer_'.$attribute_cpf_customer);
+            $_taxvat = $order->getData('customer_' . $attribute_cpf_customer);
             if (empty($_taxvat) && !empty($customerData)) {
                 if (array_key_exists($attribute_cpf_customer, $customerData)) {
                     $_taxvat = $customerData[$attribute_cpf_customer];
@@ -167,7 +165,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $_taxvat = $order->getBillingAddress()->getData($attribute_cpf_address);
         }
 
-        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
 
         $type_cnpj = $this->getTypeForCNPJ();
 
@@ -179,7 +177,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_'.$attribute_name);
+                    $name = $order->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -189,14 +187,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $order->getBillingAddress()->getData($attribute_name);
                 }
-
             } else {
                 $_typedocument = "CPF";
             }
-
         } elseif ($type_cnpj === "use_customer") {
             $attribute_cnpj = $this->getCNPJAttributeForCustomer();
-            $_taxvat = $order->getData('customer_'.$attribute_cnpj);
+            $_taxvat = $order->getData('customer_' . $attribute_cnpj);
             if (empty($_taxvat) && !empty($customerData)) {
                 if (array_key_exists($attribute_cnpj, $customerData)) {
                     $_taxvat = $customerData[$attribute_cnpj];
@@ -207,7 +203,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $type_name_company = $this->getTypeNameCompany();
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_'.$attribute_name);
+                    $name = $order->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -217,7 +213,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $attribute_name = $this->getCompanyAttributeForAddress();
                     $name = $order->getBillingAddress()->getData($attribute_name);
                 }
-
             }
         } elseif ($type_cnpj === "use_address") {
             $attribute_cnpj_address = $this->getCNPJAttributeForAddress();
@@ -227,7 +222,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $type_name_company = $this->getTypeNameCompany();
                 if ($type_name_company === "customer") {
                     $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_'.$attribute_name);
+                    $name = $order->getData('customer_' . $attribute_name);
                     if (empty($name) && !empty($customerData)) {
                         if (array_key_exists($attribute_name, $customerData)) {
                             $name = $customerData[$attribute_name];
@@ -240,7 +235,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        $taxvat = preg_replace("/[^0-9]/", "", $_taxvat);
+        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
 
         $email = $order->getCustomerEmail();
 
@@ -253,7 +248,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $region_billing = $order->getBillingAddress()->getRegionCode();
 
-        $postcode_billing = substr(preg_replace("/[^0-9]/", "", $order->getBillingAddress()->getData('postcode')).'00000000', 0, 8);
+        $postcode_billing = substr(preg_replace("/[^0-9]/", "", (string) $order->getBillingAddress()->getData('postcode')) . '00000000', 0, 8);
 
         $billing_logradouro = $street_billing[$this->getStreetPositionLogradouro()];
 
@@ -276,7 +271,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             ->setTaxpayerId($taxvat)
             ->setPhone($ddd_telephone, $number_telephone)
             ->setEmail($email)
-            ->setAddress($ipag->address()
+            ->setAddress(
+                $ipag->address()
                     ->setStreet($billing_logradouro)
                     ->setNumber($billing_number)
                     ->setNeighborhood($billing_district)
@@ -379,10 +375,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $street_logradouro;
     }
 
-    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '')
+    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '', $deviceFingerprint = '')
     {
         $baseUrl = $this->_storeManager->getStore()->getBaseUrl();
-        $callbackUrl = $baseUrl.'ipag/notification/Callback';
+        $callbackUrl = $baseUrl . 'ipag/notification/Callback';
 
         $number_date = $this->getDueNumber();
         $expiration_date = $this->getDateDue($number_date);
@@ -397,9 +393,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             ->setCustomer($customer)
             ->setExpiry($expiration_date)
             ->setCart($cart);
-        
+
         if (!empty($fingerprint)) {
             $ipagOrder->setAcquirerToken($fingerprint);
+        }
+
+        if (!empty($deviceFingerprint)) {
+            $ipagOrder->setDeviceFingerprint($deviceFingerprint);
         }
 
         return $ipagOrder;
@@ -452,7 +452,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $additionalPrice = $total_parcelado - $order->getGrandTotal();
             $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
             $additionalPrice = $additionalPrice + $tax;
-
         } elseif ($total > $order->getGrandTotal()) {
             $additionalPrice = $total - $order->getGrandTotal();
             $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
@@ -483,7 +482,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $additionalPrice = $total_parcelado - $order->getGrandTotal();
             $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
             $additionalPrice = $additionalPrice + $tax;
-
         } elseif ($total > $order->getGrandTotal()) {
             $additionalPrice = $total - $order->getGrandTotal();
             $additionalPrice = number_format((float) $additionalPrice, 2, '.', '') * self::ROUND_UP;
@@ -529,7 +527,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $payment = $ipag->payment()
             ->setMethod($bandeira)
-            ->setCreditCard($ipag->creditCard()
+            ->setCreditCard(
+                $ipag->creditCard()
                     ->setNumber($numero)
                     ->setHolder($nome)
                     ->setExpiryMonth($mes)
@@ -573,7 +572,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getNumberOrDDD($param_telefone, $param_ddd = false)
     {
         $cust_ddd = '11';
-        $cust_telephone = preg_replace("/[^0-9]/", "", $param_telefone);
+        $cust_telephone = preg_replace("/[^0-9]/", "", (string) $param_telefone);
         if (strlen($cust_telephone) == 11) {
             $st = strlen($cust_telephone) - 9;
             $indice = 9;
@@ -596,7 +595,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getInstructionLines($line)
     {
-        $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/instrucao'.$line, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/instrucao' . $line, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         return $instrucao1;
     }
@@ -606,7 +605,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $type_interest = $this->_scopeConfig->getValue('payment/ipagcc/installment/type_interest', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         return $type_interest;
-
     }
 
     public function getJuros()
@@ -706,7 +704,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $_environment = $this->getEnvironmentMode();
         $id = $this->_scopeConfig->getValue(
-            'payment/ipagbase/'.$type.'_id_'.$_environment, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+            'payment/ipagbase/' . $type . '_id_' . $_environment,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
         return $id;
     }
@@ -715,7 +715,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $_environment = $this->getEnvironmentMode();
         $token = $this->_scopeConfig->getValue(
-            'payment/ipagbase/'.$type.'_token_'.$_environment, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+            'payment/ipagbase/' . $type . '_token_' . $_environment,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
         return $token;
     }

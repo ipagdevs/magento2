@@ -1,4 +1,5 @@
 <?php
+
 namespace Ipag\Payment\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -160,7 +161,7 @@ class ConfigProviderCc implements ConfigProviderInterface
     protected function getCcAvailableTypes()
     {
         $ccTypes = $this->scopeConfig->getValue('payment/ipag/cctypes');
-        $keys = explode(',', $ccTypes);
+        $keys = explode(',', (string) $ccTypes);
         $all = $this->_ccoptions;
         foreach ($all as $key => $label) {
             if (!in_array($key, $keys)) {
@@ -191,7 +192,7 @@ class ConfigProviderCc implements ConfigProviderInterface
 
             if (!array_key_exists($code, $this->icons)) {
                 $asset = $this->ccConfig
-                    ->createAsset('Ipag_Payment::images/cc/'.strtolower($code).'.png');
+                    ->createAsset('Ipag_Payment::images/cc/' . strtolower($code) . '.png');
                 $placeholder = $this->assetSource->findSource($asset);
                 if ($placeholder) {
                     list($width, $height) = getimagesize($asset->getSourceFile());
@@ -201,7 +202,6 @@ class ConfigProviderCc implements ConfigProviderInterface
                         'height' => $height,
                     ];
                 }
-
             }
         }
         return $this->icons;
@@ -217,8 +217,8 @@ class ConfigProviderCc implements ConfigProviderInterface
             $this->localeResolver->getLocale()
         )['calendar']['gregorian']['monthNames']['format']['wide'];
         foreach ($months as $key => $value) {
-            $monthNum = ++$key < 10 ? '0'.$key : $key;
-            $data[$key] = $monthNum.' - '.$value;
+            $monthNum = ++$key < 10 ? '0' . $key : $key;
+            $data[$key] = $monthNum . ' - ' . $value;
         }
         return $data;
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Ipag\Payment\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -48,7 +49,9 @@ class ConfigProviderPix implements ConfigProviderInterface
     {
         return $this->method->isAvailable() ? [
             'payment' => [
-                'ipagpix' => [],
+                'ipagpix' => [
+                    'show_logo'          => $this->getIpagLogoActive(),
+                ],
             ],
         ] : [];
     }
@@ -58,5 +61,12 @@ class ConfigProviderPix implements ConfigProviderInterface
         $currencySymbol = $this->_priceCurrency
             ->getCurrency()->getCurrencySymbol();
         return $currencySymbol;
+    }
+
+    public function getIpagLogoActive()
+    {
+        $logoactive = $this->scopeConfig->getValue('payment/ipagbase/show_logo');
+
+        return $logoactive;
     }
 }

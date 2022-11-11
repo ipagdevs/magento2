@@ -1,4 +1,5 @@
 <?php
+
 namespace Ipag\Payment\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -57,6 +58,7 @@ class ConfigProviderBoleto implements ConfigProviderInterface
                     'interest_free'      => $this->getSemJuros(),
                     'max_installment'    => $this->MaxInstallment(),
                     'min_installment'    => $this->MinInstallment(),
+                    'show_logo'          => $this->getIpagLogoActive(),
                 ],
             ],
         ] : [];
@@ -128,5 +130,12 @@ class ConfigProviderBoleto implements ConfigProviderInterface
     {
         $parcelasMaximo = $this->scopeConfig->getValue('payment/ipagboleto/installment/max_installment');
         return $parcelasMaximo;
+    }
+
+    public function getIpagLogoActive()
+    {
+        $logoactive = $this->scopeConfig->getValue('payment/ipagbase/show_logo');
+
+        return $logoactive;
     }
 }

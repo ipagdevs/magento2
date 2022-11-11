@@ -435,6 +435,9 @@ define(
 				if (jQuery('#' + this.getCode() + '_mercadopago_token')) {
 					payload['additional_data']['fingerprint'] = jQuery('#' + this.getCode() + '_mercadopago_token').val();
 				}
+				if (jQuery('#' + this.getCode() + '_device_fingerprint')) {
+					payload['additional_data']['device_fingerprint'] = jQuery('#' + this.getCode() + '_device_fingerprint').val();
+				}
 				return payload;
 			},
 

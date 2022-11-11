@@ -199,6 +199,8 @@
                 <!-- ko if: (getMercadoPagoActive() == 1) -->
                 <input type="hidden" value="" name="mercadopago_token" data-bind="attr: {id: getCode() + '_mercadopago_token'}">
                 <!-- /ko -->
+                
+                <input type="hidden" value="" name="device_fingerprint" data-bind="attr: {id: getCode() + '_device_fingerprint'}">
             </fieldset>
         </form>
         <div class="checkout-agreements-block">
@@ -224,7 +226,6 @@
     </div>
 </div>
 <!-- ko if: (getMercadoPagoActive() == 1) -->
-<div data-bind="afterRender: prepareipagmp()"></div>  
-
-
+<div data-bind="afterRender: prepareipagmp()"></div>
 <!-- /ko -->
+<div data-bind="afterRender: manual_bb_callback()"></div>
