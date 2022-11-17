@@ -150,15 +150,13 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
                         $order = $this->orderRepository->get($order->getEntityId());
                         $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                         $state = $this->scopeConfig->getValue("payment/ipagcc/order_cancel", $storeScope);
-
                         if (in_array($state, $this->ipagOrderStatus->getAvailableStatus())) {
                             $order->setState($state);
-                            $order->setStatus($state);
-
-                            $order->addStatusHistoryComment('Order status UPDATED', false);
-                            $this->orderRepository->save($order);
                         }
+                        $order->setStatus($state);
+                        $order->addStatusHistoryComment('Order status UPDATED', false);
                         $this->orderManagement->cancel($order->getEntityId());
+                        $this->orderRepository->save($order);
                     }
 
                     //atualização do orderInfo com a informação atualizada
