@@ -148,12 +148,12 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
                         }
                     } elseif ($response->payment->status == '3' || $response->payment->status == '7') {
                         $order = $this->orderRepository->get($order->getEntityId());
-                        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+                        /**$storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                         $state = $this->scopeConfig->getValue("payment/ipagcc/order_cancel", $storeScope);
                         if (in_array($state, $this->ipagOrderStatus->getAvailableStatus())) {
                             $order->setState($state);
                         }
-                        $order->setStatus($state);
+                        $order->setStatus($state);*/
                         $order->addStatusHistoryComment('Order status UPDATED', false);
                         $this->orderManagement->cancel($order->getEntityId());
                         $this->orderRepository->save($order);
