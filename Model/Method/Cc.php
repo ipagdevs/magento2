@@ -249,9 +249,25 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                     }
                 }
 
+                $stateDefine = \Magento\Sales\Model\Order::STATE_NEW;
+
+                $mapStates = [
+                    '1' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Pagamento iniciado
+                    '2' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Esperando pagamento
+                    '3' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento cancelado
+                    '4' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento em análise
+                    '5' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento pré-Autorizado
+                    '7' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento recusado
+                    '8' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento capturado
+                ];
+
+                if (array_key_exists('payment.status', $json) && array_key_exists(strval($json['payment.status']), $mapStates))
+                    $stateDefine = $mapStates[strval($json['payment.status'])];
+
                 $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                 $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                $order
+                    ->setState($stateDefine)
                     ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
 
                 if (!is_null($response)) {
@@ -265,7 +281,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 }
                 $order->save();
 
-                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class . ' STATUS');
+                $this->logger->loginfo($stateDefine, self::class . ' STATUS');
                 $this->logger->loginfo($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope), self::class . ' STATUS');
             } catch (\Exception $e) {
                 throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
