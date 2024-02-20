@@ -271,10 +271,10 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
 
                     $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                     $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                    $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                    $order->setState(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT)
                         ->setStatus($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope));
 
-                    $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class . ' STATUS');
+                    $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, self::class . ' STATUS');
                     $this->logger->loginfo($scopeConfig->getValue("payment/ipagboleto/order_status", $storeScope), self::class . ' STATUS');
 
                     if (!is_null($response)) {

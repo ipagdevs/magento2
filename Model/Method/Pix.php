@@ -198,7 +198,7 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 }
                 $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
                 $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                $order->setState(\Magento\Sales\Model\Order::STATE_NEW)
+                $order->setState(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT)
                     ->setStatus($scopeConfig->getValue("payment/ipagpix/order_status", $storeScope));
                 
                 if (!is_null($response)) {
@@ -209,7 +209,7 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 }
                 $order->save();
 
-                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_NEW, self::class.' STATUS');
+                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, self::class.' STATUS');
                 $this->logger->loginfo($scopeConfig->getValue("payment/ipagpix/order_status", $storeScope), self::class.' STATUS');
             } catch (\Exception $e) {
                 throw new LocalizedException(__('Payment failed '.$e->getMessage()));
