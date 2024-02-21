@@ -26,6 +26,8 @@ class ConfigProviderPix implements ConfigProviderInterface
 
     protected $scopeConfig;
 
+    protected $_priceCurrency;
+
     /**
      * @param PaymentHelper $paymentHelper
      * @param Escaper $escaper

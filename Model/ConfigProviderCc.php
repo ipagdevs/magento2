@@ -81,6 +81,9 @@ class ConfigProviderCc implements ConfigProviderInterface
      */
     protected $assetSource;
     protected $_priceFiler;
+    protected $_date;
+    protected $_customerSession;
+    protected $_logger;
 
     /**
      * ConfigProvider constructor.
