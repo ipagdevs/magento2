@@ -15,6 +15,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $keyauth;
     protected $_objectManager;
     protected $date;
+    protected $_storeManager;
+    protected $customerFactory;
 
     const ROUND_UP = 100;
 
@@ -252,7 +254,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $billing_logradouro = $street_billing[$this->getStreetPositionLogradouro()];
 
-        $billing_number = $street_billing[$this->getStreetPositionNumber()];
+        $billing_number = 
+            array_key_exists($this->getStreetPositionNumber(), $street_billing) ?
+                $street_billing[$this->getStreetPositionNumber()] : '';
 
         if (count($street_billing) >= 3 && array_key_exists($this->getStreetPositionDistrict(), $street_billing)) {
             $billing_district = $street_billing[$this->getStreetPositionDistrict()];
