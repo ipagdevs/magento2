@@ -23,6 +23,26 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
 
     protected $_ipagInvoiceInstallments;
 
+    protected $_invoiceService;
+
+    protected $order;
+
+    protected $orderManagement;
+
+    protected $orderRepository;
+
+    protected $scopeConfig;
+
+    protected $ipagOrderStatus;
+
+    protected $invoiceSender;
+
+    protected $productMetadata;
+
+    protected $transactionFactory;
+
+    protected $ipagLogger;
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
