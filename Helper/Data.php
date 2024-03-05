@@ -4,7 +4,6 @@ namespace Ipag\Payment\Helper;
 
 use Ipag\Classes\Authentication;
 use Ipag\Classes\Endpoint;
-use Ipag\Classes\Enum\Method;
 use Ipag\Ipag;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
@@ -19,6 +18,56 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $customerFactory;
 
     const ROUND_UP = 100;
+
+    const IPAG_PAYMENT_STATUS = [
+        1 =>	[
+            'name' => 'CREATED',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Pagamento iniciado
+            'config_name' => 'awaiting',
+        ],
+        2 =>	[
+            'name' => 'WAITING PAYMENT',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Esperando pagamento
+            'config_name' => 'awaiting',
+        ],
+        3 =>	[
+            'name' => 'CANCELED',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento cancelado
+            'config_name' => 'canceled',
+        ],
+        4 =>	[
+            'name' => 'IN ANALISYS',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento em análise
+            'config_name' => 'awaiting',
+        ],
+        5 =>	[
+            'name' => 'PRE AUTHORIZED',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento pré-Autorizado
+            'config_name' => 'approved',
+        ],
+        6 =>	[
+            'name' => 'PARTIAL CAPTURED',
+            'order_state' => null
+        ],
+        7 =>	[
+            'name' => 'DECLINED',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento recusado
+            'config_name' => 'rejected',
+        ],
+        8 =>	[
+            'name' => 'CAPTURED',
+            'order_state' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento capturado
+            'config_name' => 'approved',
+        ],
+        9 =>	[
+            'name' => 'CHARGEDBACK',
+            'order_state' => null
+        ],
+        10 =>	[
+            'name' => 'IN DISPUTE',
+            'order_state' => null
+        ],
+    ];
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -729,5 +778,54 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getStoreUrl()
     {
         return $this->_storeManager->getStore()->getBaseUrl();
+    }
+
+    /**
+     * @throws \InvalidArgumentException
+     * @return string|false
+     */
+    public static function translatePaymentStatusToOrderStatus($paymentStatus) {
+        if (empty($paymentStatus) || !filter_var($paymentStatus, FILTER_VALIDATE_INT))
+            throw new \InvalidArgumentException('unprocessed payment status');
+
+        settype($paymentStatus, 'int');
+
+        if (!array_key_exists($paymentStatus, self::IPAG_PAYMENT_STATUS))
+            throw new \InvalidArgumentException('unprocessed payment status');
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
+        $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
+
+        if (empty(self::IPAG_PAYMENT_STATUS[$paymentStatus]['config_name']))
+            return false;
+
+        $value = $scopeConfig->getValue(
+            'payment/ipagbase/order_status/' . self::IPAG_PAYMENT_STATUS[$paymentStatus]['config_name'],
+            $storeScope
+        );
+
+        return !empty($value) ? $value : false;
+    }
+
+    /**
+     * @param string $status
+     * @return string|false
+     */
+    public static function getStateFromStatus($status) {
+        $stateFound = false;
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $statusCollection = $objectManager->create('Magento\Sales\Model\ResourceModel\Order\Status\Collection');
+        $statusCollection->joinStates();
+
+        foreach ($statusCollection as $statusCol) {
+            if ($statusCol->getStatus() == $status) {
+                $stateFound = $statusCol->getState();
+                break;
+            }
+        }
+
+        return $stateFound;
     }
 }

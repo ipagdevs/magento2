@@ -23,6 +23,27 @@
                     <label>Versão do Módulo</label>
                     <backend_model>Ipag\Payment\Block\Adminhtml\System\Config\Version</backend_model>
                 </field>
+
+                <group id="order_status" translate="label" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Order Status Management</label>
+                    <field id="approved" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order Status when payment is approved</label>
+                        <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    </field>
+                    <field id="awaiting" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order Status when payment is pending</label>
+                        <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    </field>
+                    <field id="rejected" translate="label" type="select" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order Status when payment is rejected</label>
+                        <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    </field>
+                    <field id="canceled" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order Status when payment is canceled</label>
+                        <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    </field>
+                </group>
+
                 <group id="advanced" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Configurações Avançadas</label>
                     <field id="type_cpf" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -112,10 +133,6 @@
                     <source_model>Ipag\Payment\Model\Adminhtml\Source\BankslipType</source_model>
                     <config_path>payment/ipag/banksliptypes</config_path>
                 </field>
-                <field id="order_status" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>New Order Status</label>
-                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
-                </field>
                 <field id="expiration" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Vencimento do Boleto</label>
                     <comment>em dias</comment>
@@ -176,14 +193,6 @@
                     <label>Credit Card Types</label>
                     <source_model>Ipag\Payment\Model\Adminhtml\Source\CcType</source_model>
                     <config_path>payment/ipag/cctypes</config_path>
-                </field>
-                <field id="order_status" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>New Order Status</label>
-                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
-                </field>
-                <field id="order_cancel" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Canceled Order Status</label>
-                    <source_model>Ipag\Payment\Model\Source\OrderStatus</source_model>
                 </field>
                 <group id="installment" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Configurações de parcelamento e juros</label>
@@ -248,10 +257,6 @@
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
-                </field>
-                <field id="order_status" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>New Order Status</label>
-                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Newprocessing</source_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sort Order</label>

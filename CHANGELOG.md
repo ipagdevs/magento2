@@ -4,6 +4,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.2.0 - 2024-03-05
+
+### Changed
+
+- Adicionado nova seção nas configurações do módulo para mapear o retorno de pagamento com o status da ordem.
+
 ## v1.1.1 - 2024-03-05
 
 ### Changed

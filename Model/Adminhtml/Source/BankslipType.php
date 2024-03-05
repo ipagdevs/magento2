@@ -18,7 +18,7 @@ class BankslipType extends \Magento\Payment\Model\Source\Cctype
      */
     public function getAllowedTypes()
     {
-        return ['boletoitaushopline', 'boleto_banespasantander', 'boletosicredi', 'boletosicoob', 'boletozoop', 'boletopagseguro', 'boletoshopfacil', 'boletobradesconet', 'boletobb'];
+        return ['boletoitaushopline', 'boleto_banespasantander', 'boletosicredi', 'boletosicoob', 'boletozoop', 'boletopagseguro', 'boletoshopfacil', 'boletobradesconet', 'boletobb', 'boletosimulado'];
     }
     /**
      * Returns bankslip types
@@ -36,7 +36,8 @@ class BankslipType extends \Magento\Payment\Model\Source\Cctype
             'boletopagseguro'         => 'Boleto Bancário via PagSeguro',
             'boletoshopfacil'         => 'Bradesco via ShopFacil',
             'boletobradesconet'       => 'Bradesco via Bradesco Net',
-            'boletobb'                => 'Banco do Brasil via Cobrança Eletrônica'
+            'boletobb'                => 'Banco do Brasil via Cobrança Eletrônica',
+            'boletosimulado'          => 'Boleto Simulado (Apenas para testes)'
         ];
     }
 

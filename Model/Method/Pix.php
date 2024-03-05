@@ -1,13 +1,10 @@
 <?php
 namespace Ipag\Payment\Model\Method;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
 use Ipag\Ipag;
 use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Model\Method\Online\GatewayInterface;
-use \Magento\Sales\Model\Order\Payment;
 
 class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 {
@@ -166,7 +163,6 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
         try {
             $ipag = $this->_ipagHelper->AuthorizationValidate();
 
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
             $InfoInstance = $this->getInfoInstance();
             $customer = $this->_ipagHelper->generateCustomerIpag($ipag, $order);
 
@@ -184,6 +180,10 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 $json = json_decode(json_encode($response), true);
                 $this->logger->loginfo([$response], self::class.' RESPONSE RAW');
                 $this->logger->loginfo($json, self::class.' RESPONSE JSON');
+
+                if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+                    throw new \Exception($json['errorMessage']);
+
                 foreach ($json as $j => $k) {
                     if (is_array($k)) {
                         foreach ($k as $l => $m) {
@@ -196,11 +196,19 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                         $InfoInstance->setAdditionalInformation($j, $k);
                     }
                 }
-                $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
-                $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                $order->setState(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT)
-                    ->setStatus($scopeConfig->getValue("payment/ipagpix/order_status", $storeScope));
-                
+
+                $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($json['payment.status']);
+
+                if (!$status)
+                    $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+
+                $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
+
+                $order->setStatus($status);
+
+                if ($state)
+                    $order->setState($state);
+
                 if (!is_null($response)) {
                     $order->addStatusHistoryComment(
                         __('iPag response: Status: %1, Message: %2.', $response->payment->status,
@@ -209,8 +217,8 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 }
                 $order->save();
 
-                $this->logger->loginfo(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, self::class.' STATUS');
-                $this->logger->loginfo($scopeConfig->getValue("payment/ipagpix/order_status", $storeScope), self::class.' STATUS');
+                $this->logger->loginfo($state, self::class . ' STATE');
+                $this->logger->loginfo($status, self::class . ' STATUS');
             } catch (\Exception $e) {
                 throw new LocalizedException(__('Payment failed '.$e->getMessage()));
             }

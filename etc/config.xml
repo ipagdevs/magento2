@@ -7,6 +7,12 @@
                 <model>Ipag\Payment\Model\Method\Cc</model>
                 <environment_mode>production</environment_mode>
                 <show_logo>1</show_logo>
+                <order_status>
+                    <approved>processing</approved>
+                    <rejected>pending</rejected>
+                    <captured>processing</captured>
+                    <canceled>canceled</canceled>
+                </order_status>
                 <advanced>
                     <title>Config Avançada</title>
                     <type_cpf>address</type_cpf>

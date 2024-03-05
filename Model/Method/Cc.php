@@ -6,7 +6,6 @@ use Ipag\Ipag;
 use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Model\Method\Online\GatewayInterface;
-use \Magento\Sales\Model\Order\Payment;
 
 class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 {
@@ -171,11 +170,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 
     public function processPayment($payment)
     {
-
         $order = $payment->getOrder();
-        $failedStatuses = [3, 7];
-        $approvedStatuses = [5, 8];
-        $pendingStatuses = [1, 2, 4];
 
         try {
             $ipag = $this->_ipagHelper->AuthorizationValidate();
@@ -236,6 +231,10 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 $json = json_decode(json_encode($response), true);
                 $this->logger->loginfo([$response], self::class . ' RESPONSE RAW');
                 $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
+
+                if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+                    throw new \Exception($json['errorMessage']);
+
                 foreach ($json as $j => $k) {
                     if (is_array($k)) {
                         foreach ($k as $l => $m) {
@@ -249,26 +248,17 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                     }
                 }
 
-                $stateDefine = \Magento\Sales\Model\Order::STATE_NEW;
+                $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($json['payment.status']);
 
-                $mapStates = [
-                    '1' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Pagamento iniciado
-                    '2' => \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, // Esperando pagamento
-                    '3' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento cancelado
-                    '4' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento em análise
-                    '5' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento pré-Autorizado
-                    '7' => \Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW,  // Pagamento recusado
-                    '8' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento capturado
-                ];
+                if (!$status)
+                    $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
 
-                if (array_key_exists('payment.status', $json) && array_key_exists(strval($json['payment.status']), $mapStates))
-                    $stateDefine = $mapStates[strval($json['payment.status'])];
+                $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
 
-                $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
-                $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
-                $order
-                    ->setState($stateDefine)
-                    ->setStatus($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope));
+                $order->setStatus($status);
+
+                if ($state)
+                    $order->setState($state);
 
                 if (!is_null($response)) {
                     $order->addStatusHistoryComment(
@@ -281,8 +271,8 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 }
                 $order->save();
 
-                $this->logger->loginfo($stateDefine, self::class . ' STATUS');
-                $this->logger->loginfo($scopeConfig->getValue("payment/ipagcc/order_status", $storeScope), self::class . ' STATUS');
+                $this->logger->loginfo($state, self::class . ' STATE');
+                $this->logger->loginfo($status, self::class . ' STATUS');
             } catch (\Exception $e) {
                 throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
             }

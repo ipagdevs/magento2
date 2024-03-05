@@ -4,10 +4,8 @@ namespace Ipag\Payment\Controller\Notification;
 
 use Ipag\Classes\Services\CallbackService;
 use Ipag\Ipag;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Model\Order;
 
 //use Magento\Framework\App\RequestInterface;
 //use Magento\Framework\App\Request\InvalidRequestException;
@@ -196,6 +194,18 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
                             $payment->setAdditionalInformation($j, $k);
                         }
                     }
+
+                    $status = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($response->payment->status);
+
+                    if ($status) {
+                        $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
+
+                        $order->setStatus($status);
+
+                        if ($state)
+                            $order->setState($state);
+                    }
+
                     $order->save();
 
                     $order->addStatusHistoryComment(
@@ -210,7 +220,6 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
                 }
             }
         } catch (\Exception $e) {
-
             echo $e->getMessage();
             $this->messageManager->addError($e->getMessage());
         }
