@@ -43,7 +43,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         5 =>	[
             'name' => 'PRE AUTHORIZED',
             'order_state' => \Magento\Sales\Model\Order::STATE_PROCESSING,      // Pagamento pré-Autorizado
-            'config_name' => 'approved',
+            'config_name' => 'authorized',
         ],
         6 =>	[
             'name' => 'PARTIAL CAPTURED',

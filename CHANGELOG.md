@@ -4,6 +4,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.3.0 - 2024-03-18
+
+### Added
+
+- Adicionado nova opção (Pre authorized) nas configurações de mapeamento de status do módulo.
+
 ## v1.2.0 - 2024-03-05
 
 ### Changed

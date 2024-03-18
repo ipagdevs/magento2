@@ -26,6 +26,10 @@
 
                 <group id="order_status" translate="label" sortOrder="14" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Order Status Management</label>
+                    <field id="authorized" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Order Status when payment is authorized (Pre authorized)</label>
+                        <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>
+                    </field>
                     <field id="approved" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Order Status when payment is approved</label>
                         <source_model>\Magento\Sales\Model\ResourceModel\Order\Status\Collection</source_model>

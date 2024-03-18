@@ -8,7 +8,9 @@
                 <environment_mode>production</environment_mode>
                 <show_logo>1</show_logo>
                 <order_status>
+                    <authorized>processing</authorized>
                     <approved>processing</approved>
+                    <awaiting>pending_payment</awaiting>
                     <rejected>pending</rejected>
                     <captured>processing</captured>
                     <canceled>canceled</canceled>
