@@ -251,7 +251,7 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
                 $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($json['payment.status']);
 
                 if (!$status)
-                    $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+                    $status = \Magento\Sales\Model\Order::STATE_NEW;
 
                 $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
 

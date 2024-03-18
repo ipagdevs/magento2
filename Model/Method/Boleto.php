@@ -275,7 +275,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($json['payment.status']);
 
                     if (!$status)
-                        $status = \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT;
+                        $status = \Magento\Sales\Model\Order::STATE_NEW;
 
                     $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
 
