@@ -4,6 +4,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.0 - 2024-03-19
+
+### Added
+
+- Adicionados atributos NSU e Auth ID as informações de pagamento no detalhes da ordem.
+
+### Changed
+
+- Melhorada a exibição do atributo Transaction Message no detalhes da ordem.
+
 ## v1.3.0 - 2024-03-18
 
 ### Added
