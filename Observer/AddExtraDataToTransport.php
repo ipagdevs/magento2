@@ -9,17 +9,23 @@ class AddExtraDataToTransport implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
-        $statusPayment = $order->getPayment()->getAdditionalInformation('payment.status');
+        $method = $order->getPayment()->getMethodInstance()->getCode();
 
-        $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($statusPayment);
+        if(in_array($method, ['ipagcc', 'ipagpix', 'ipagboleto'])) {
+            $statusPayment = $order->getPayment()->getAdditionalInformation('payment.status');
 
-        if ($status) {
-            $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
+            if (!empty($statusPayment)) {
+                $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($statusPayment);
 
-            $order->setStatus($status);
+                if ($status) {
+                    $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
 
-            if ($state)
-                $order->setState($state);
+                    $order->setStatus($status);
+
+                    if ($state)
+                        $order->setState($state);
+                }
+            }
         }
     }
 }

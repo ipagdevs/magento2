@@ -781,17 +781,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @throws \InvalidArgumentException
      * @return string|false
      */
     public static function translatePaymentStatusToOrderStatus($paymentStatus) {
         if (empty($paymentStatus) || !filter_var($paymentStatus, FILTER_VALIDATE_INT))
-            throw new \InvalidArgumentException('unprocessed payment status');
+            return false; // throw new \InvalidArgumentException('unprocessed payment status');
 
         settype($paymentStatus, 'int');
 
         if (!array_key_exists($paymentStatus, self::IPAG_PAYMENT_STATUS))
-            throw new \InvalidArgumentException('unprocessed payment status');
+            return false; // throw new \InvalidArgumentException('unprocessed payment status');
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
