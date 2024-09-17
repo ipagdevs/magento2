@@ -8,7 +8,7 @@ namespace Ipag\Payment\Block\Info;
 class Cc extends \Magento\Payment\Block\Info\Cc
 {
     protected $keys = ['fullname' => 'Name on Card', 'installments' => 'Installments', 'interest' => 'Card Interest', 'total_with_interest' => 'Total Price with Interest'];
-    protected $adminKeys = ['tid' => 'Transaction Code', 'payment.message' => 'Transaction Message', 'authId' => 'Auth ID'];
+    protected $adminKeys = ['tid' => 'Transaction Code', 'payment.message' => 'Transaction Message', 'authId' => 'Auth ID', 'nsu' => 'NSU'];
 
     /**
      * Retrieve CC expiration month
@@ -56,18 +56,19 @@ class Cc extends \Magento\Payment\Block\Info\Cc
                 }
             }
 
-            // Encontra último registro do histórico
-            $i = 0;
-            while ($historyFind = $this->getInfo()->getAdditionalInformation('history.' . $i++))
-                $history = $historyFind;
+            //@NOTE: attr 'NSU' not found. Search history.
+            if (!array_key_exists('NSU', $data) && empty($data['NSU'])) {
+                 $i = 0;
 
-            if
-            (
-                !empty($history)
-                    && array_key_exists('authorizationNsu', $history)
-                    && !empty($history['authorizationNsu'])
-            )
-                $data['NSU'] = $history['authorizationNsu'];
+                while ($history = $this->getInfo()->getAdditionalInformation('history.' . $i++)) {
+                    if (
+                        is_array($history) &&
+                        array_key_exists('authorizationNsu', $history) &&
+                        !empty($history['authorizationNsu'])
+                    )
+                        $data['NSU'] = $history['authorizationNsu'];
+                }
+            }
 
         }
         return $transport->setData(array_merge($transport->getData(), $data));
