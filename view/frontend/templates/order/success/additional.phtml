@@ -18,6 +18,8 @@ else {
 <?php if($block->getMethodCode() === "ipagpix") : 
 	$qrCode = $block->getInfo('pix.qrCode');
 	$qrHelper = $block->getQrHelper($qrCode);
+	$transUuid = md5($block->getInfo('id'));
+
 	if (!empty($qrHelper)) : ?>
 		<div id="qr-info" class="col-md-6">
 			<div class="card card-default">
@@ -33,6 +35,7 @@ else {
 				</div>
 			</div>
 		</div>
+
 		<script>
 			var copyElement = document.getElementById("button-copy");
 
@@ -52,6 +55,40 @@ else {
 					copyElement.classList.remove('copied-icon');
 					copyElement.innerHTML = 'Copiar código do QR Code';
 				}, 1000);
+			});
+		</script>
+		<script>
+			function renderIpagSuccessPayment() {
+				var contentContainer = jQuery('#qr-info');
+
+				jQuery('html,body').animate({scrollTop: contentContainer.offset().top - 150});
+
+				contentContainer.html(`
+				<div class="icon--order-success">
+					<svg xmlns="http://www.w3.org/2000/svg" width="154px" height="154px">
+						<g fill="none" stroke="#22AE73" stroke-width="2">
+							<circle cx="77" cy="77" r="72" style="stroke-dasharray:480px, 480px; stroke-dashoffset: 960px;"></circle>
+							<circle id="colored" fill="#22AE73" cx="77" cy="77" r="72"
+							style="stroke-dasharray:480px, 480px; stroke-dashoffset: 960px;"></circle>
+							<polyline class="st0" stroke="#fff" stroke-width="10" points="43.5,77.8 63.7,97.9 112.2,49.4 "
+							style="stroke-dasharray:100px, 100px; stroke-dashoffset: 200px;" />
+						</g>
+					</svg>
+					<h3>Pagamento confirmado!</h3>
+				</div>
+				`);
+			}
+		</script>
+		<script type="module">
+			import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+
+			const socket = io("wss://websocket.ipag.com.br");
+			const token = "<?= $transUuid ?>";
+
+			socket.on(token, function(data) {
+				if (data.status == 200) {
+					renderIpagSuccessPayment();
+				}
 			});
 		</script>
 	<?php else : ?>
