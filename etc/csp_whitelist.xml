@@ -1,11 +1,23 @@
 <?xml version="1.0"?>
 <csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
     <policies>
+        <policy id="connect-src">
+            <values>
+                <value id="mercadopago-api" type="host">https://api.mercadopago.com</value>
+                <value id="mercadolibre" type="host">https://www.mercadolibre.com</value>
+                <value id="ipag" type="host">https://www.ipag.com.br</value>
+            </values>
+        </policy>
         <policy id="script-src">
             <values>
+                <value id="mercadopago-js" type="host">https://secure.mlstatic.com</value>
                 <value id="socketio" type="host">https://cdn.socket.io</value>
-                <value id="websocketipag" type="host">https://websocket.ipag.com.br</value>
-                <value id="wwswebsocketipag" type="host">wss://websocket.ipag.com.br</value>
+            </values>
+        </policy>
+        <policy id="img-src">
+            <values>
+                <value id="mercadolibre-img" type="host">https://www.mercadolibre.com</value>
+                <value id="mercadolivre-img" type="host">https://www.mercadolivre.com</value>
             </values>
         </policy>
     </policies>
