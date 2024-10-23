@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.2 - 2024-10-23
+- Retirada dependências antigas do módulo não utilizadas.
+
 ## v1.5.1 - 2024-10-16
 
 - Corrige CSP whitelist do módulo.

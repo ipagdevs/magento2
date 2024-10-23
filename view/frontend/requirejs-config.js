@@ -1,12 +1,7 @@
 /**
  *
- * @type {{map: {"*": {MPipag: string, BBipag: string}}}}
+ * @type {{map: {"*": {}}}}
  */
 let config = {
-    map: {
-        '*': {
-            MPipag: 'https://secure.mlstatic.com/sdk/javascript/v1/mercadopago.js',
-            BBipag: 'https://mpsnare.iesnare.com/snare.js'
-        }
-    }
+    map: {}
 };

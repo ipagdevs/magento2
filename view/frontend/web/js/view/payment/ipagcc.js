@@ -1,8 +1,7 @@
 define(
     [
         'uiComponent',
-        'Magento_Checkout/js/model/payment/renderer-list',
-        'MPipag'
+        'Magento_Checkout/js/model/payment/renderer-list'
     ],
     function (
         Component,
