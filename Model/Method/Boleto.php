@@ -33,6 +33,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
     protected $_ipagInvoiceInstallments;
     protected $_storeManager;
     protected $_date;
+    protected $_canUseInternal = true;
 
     /**
      * Constructor
