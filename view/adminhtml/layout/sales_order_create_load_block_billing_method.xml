@@ -4,8 +4,12 @@ xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_config
     <body>
         <referenceBlock name="order.create.billing.method.form">
             <action method="setMethodFormTemplate">
-                <argument name="method" xsi:type="string">carat_payment_link</argument>
-                <argument name="template" xsi:type="string">Carat_Core::payment_link/info.phtml</argument>
+                <argument name="method" xsi:type="string">ipagboleto</argument>
+                <argument name="template" xsi:type="string">Ipag_Payment::ipag/info.phtml</argument>
+            </action>
+            <action method="setMethodFormTemplate">
+                <argument name="method" xsi:type="string">ipagpix</argument>
+                <argument name="template" xsi:type="string">Ipag_Payment::ipag/info.phtml</argument>
             </action>
         </referenceBlock>
     </body>
