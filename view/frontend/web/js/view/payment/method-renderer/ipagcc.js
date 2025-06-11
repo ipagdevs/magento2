@@ -381,7 +381,7 @@ define(
 				var temp = _.map(this.getInstall(), function (value, key) {
 					var inst = key + ' x ' + value['parcela'] + ' | Total: ' + value['total_parcelado'];
 					if (value['juros'] > 0) {
-						inst += ' (' + value['juros'] + '% a.m.)';
+						inst += ' (com juros)';
 					}
 					return {
 						'value': key,
