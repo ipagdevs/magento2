@@ -49,6 +49,8 @@ class Cc extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 
     protected $_isInitializeNeeded = true;
 
+    protected $_canUseInternal = false;
+
     /**
      * Constructor
      * @param \Magento\Framework\App\RequestInterface $request
