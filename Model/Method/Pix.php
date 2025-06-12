@@ -29,6 +29,7 @@ class Pix extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
     protected $_ipagInvoiceInstallments;
     protected $_storeManager;
     protected $_date;
+    protected $_canUseInternal = true;
 
     /**
      * Constructor

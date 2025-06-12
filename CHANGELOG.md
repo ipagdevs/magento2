@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.6.0 - 2025-06-12
+- Habilita métodos de pagamento Pix e Boleto nas opções de pagamento de uma nova ordem no painel Admin
+
 ## v1.5.3 - 2025-06-11
 - Altera label de opções de parcelas com juros
 
