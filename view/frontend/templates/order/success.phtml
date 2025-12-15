@@ -5,6 +5,16 @@
  * See COPYING.txt for license details.
  */
 
+	$analysesStatuses = ['4'];
+	$deniedStatuses = ['3', '7'];
+
+	$paymentStatus = $block->getInfo('payment.status');
+
+	if (in_array($paymentStatus, $analysesStatuses) && $block->getMethodCode() == 'ipagcc') {
+		header('Location: ' . $block->getInfo('urlAuthentication'));
+		exit;
+	}
+
 ?>
 <?php /** @var $block \Ipag\Payment\Block\Success */ ?>
 
@@ -16,11 +26,11 @@
 			<p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']) ?></p>
 		<?php endif; ?>
 
-		<?php $paymentStatus = $block->getInfo('payment.status'); ?>
-		<?php $deniedStatuses = ['3', '7']; ?>
 		<?php if (in_array($paymentStatus, $deniedStatuses) && $block->getMethodCode() == 'ipagcc') : ?>
 			<p><?= $block->escapeHtml(__('Seu cartão não pode ser processado, entre em contato com sua operadora.'))
 				?></p>
+		<?php elseif (in_array($paymentStatus, $analysesStatuses) && $block->getMethodCode() == 'ipagcc') : ?>
+			<p><?= $block->escapeHtml(__('Your payment is under review, please continue the process by clicking the link below.')) ?></p>
 		<?php else : ?>
 			<p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
 		<?php endif; ?>

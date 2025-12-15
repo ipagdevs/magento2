@@ -10,9 +10,15 @@ class Environment implements \Magento\Framework\Option\ArrayInterface
 
    public function toOptionArray()
     {
-        return [
+        $defaultOptions = [
             'production' => 'Produção',
             'sandbox' => 'Sandbox - Ambiente de Teste',
         ];
+
+        if (getenv('IPAG_ENVIRONMENT_LOCAL')) {
+            $defaultOptions['local'] = 'Local - Ambiente de Desenvolvimento';
+        }
+
+        return $defaultOptions;
     }
 }

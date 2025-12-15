@@ -1,0 +1,47 @@
+<?php /** @var $block \Magento\Framework\View\Element\Template */ ?>
+
+<div class="page-main">
+    <div class="block block-success">
+        <div class="block-content">
+
+            <div class="page-title-wrapper">
+                <h1 class="page-title">
+                    <span class="base" data-ui-id="page-title-wrapper">
+                        <?= $block->escapeHtml(__('Whoops, our bad... ')) ?>
+                    </span>
+                </h1>
+            </div>
+
+            <dl>
+                <dt>
+                    <?= $block->escapeHtml(__('Sorry, but your payment was not approved. Please try checking the following steps.')) ?>
+                </dt>
+                <dd>
+                    <ul class="disc">
+                        <li><?= $block->escapeHtml(__('Has your bank confirmed the payment?')) ?></li>
+                        <li><?= $block->escapeHtml(__('Did you have any problems with the payment process?')) ?></li>
+                        <li><?= $block->escapeHtml(__('Has your connection to the internet been unstable during the payment process?')) ?></li>
+                    </ul>
+                </dd>
+            </dl>
+            <dl>
+                <dt>
+                    <?= $block->escapeHtml(__('What can I do now?')) ?>
+                </dt>
+                <dd>
+                    <?= $block->escapeHtml(__('You can try to place your order again or take a look at these options:')) ?>
+                </dd>
+                <dd>
+                    <ul class="disc">
+                        <li><?= $block->escapeHtml(__('Contact your bank to check if there are any restrictions on your card.')) ?></li>
+                        <li><?= $block->escapeHtml(__('Try order again. If the problem persists, consider using another payment method.')) ?></li>
+                        <li>
+                            <?= $block->escapeHtml(__('If the problem persists, please contact our support team.')) ?>
+                            Visit <a href="<?= $block->getUrl('contact') ?>">Contact Us page</a>.
+                        </li>
+                    </ul>
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>

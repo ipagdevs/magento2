@@ -4,11 +4,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v1.7.0 - 2025-12-15
+- Adiciona novo fluxo de redirecionamento de autenticação de pgamento.
+
 ## v1.6.0 - 2025-06-12
-- Habilita métodos de pagamento Pix e Boleto nas opções de pagamento de uma nova ordem no painel Admin
+- Habilita métodos de pagamento Pix e Boleto nas opções de pagamento de uma nova ordem no painel Admin.
 
 ## v1.5.3 - 2025-06-11
-- Altera label de opções de parcelas com juros
+- Altera label de opções de parcelas com juros.
 
 ## v1.5.2 - 2024-10-23
 - Retirada dependências antigas do módulo não utilizadas.
@@ -61,16 +64,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- Corrigido erros no código para suporte do php 8.2
+- Corrigido erros no código para suporte do php 8.2.
 
 ## v1.1.0 - 2024-02-21
 
 ### Changed
 
-- Melhorias no código para suporte ao php 8.2
+- Melhorias no código para suporte ao php 8.2.
 
 ## v1.0.39 - 2024-02-21
 
 ### Changed
 
-- Melhorada o comportamento do state da order no processamento de pagamento
+- Melhorada o comportamento do state da order no processamento de pagamento.
