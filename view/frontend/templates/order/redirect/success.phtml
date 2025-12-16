@@ -1,0 +1,14 @@
+<?php /** @var $block \Magento\Framework\View\Element\Template */ ?>
+<div class="page-title-wrapper">
+    <h1 class="page-title"><span><?= $block->escapeHtml(__('Order received')) ?></span></h1>
+</div>
+<div class="page-main">
+    <div class="checkout-success">
+        <div class="checkout-success-message">
+            <p><?= $block->escapeHtml(__('Thank you for your purchase! Your order has been successfully processed.')) ?></p>
+        </div>
+        <div class="checkout-success-actions">
+            <a href="<?= $block->getUrl('customer/account') ?>" class="action primary"><?= $block->escapeHtml(__('My Account')) ?></a>
+        </div>
+    </div>
+</div>

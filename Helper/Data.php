@@ -5,6 +5,7 @@ namespace Ipag\Payment\Helper;
 use Ipag\Classes\Authentication;
 use Ipag\Classes\Endpoint;
 use Ipag\Ipag;
+use Magento\Framework\Encryption\EncryptorInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -16,6 +17,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $date;
     protected $_storeManager;
     protected $customerFactory;
+    protected $encryptor;
 
     const ROUND_UP = 100;
 
@@ -75,7 +77,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Payment\Model\Method\Logger $logger,
-        \Magento\Customer\Model\CustomerFactory $customerFactory
+        \Magento\Customer\Model\CustomerFactory $customerFactory,
+        EncryptorInterface $encryptor
     ) {
         $this->_scopeConfig = $scopeConfig;
         $this->_objectManager = $objectManager;
@@ -83,6 +86,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager = $storeManager;
         $this->_logger = $logger;
         $this->customerFactory = $customerFactory;
+        $this->encryptor = $encryptor;
     }
 
     public function AuthorizationValidate()
@@ -91,6 +95,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $identification = $this->getIdentification();
         $apikey = $this->getApiKey();
         $env = $_environment === "production" ? Endpoint::PRODUCTION : Endpoint::SANDBOX;
+        $env = $_environment === "local" ? getenv('IPAG_ENVIRONMENT_URL') : $env;
 
         $auth = new Authentication($identification, $apikey);
         $ipag = new Ipag($auth, $env);
@@ -431,15 +436,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '', $deviceFingerprint = '')
     {
         $baseUrl = $this->_storeManager->getStore()->getBaseUrl();
-        $callbackUrl = $baseUrl . 'ipag/notification/Callback';
 
         $number_date = $this->getDueNumber();
         $expiration_date = $this->getDateDue($number_date);
         $orderId = $order->getIncrementId();
         $amount = $order->getGrandTotal() + $additionalPrice;
+
+        $callbackUrl = $baseUrl . 'ipag/notification/Callback';
+
+        $payload = json_encode(['order'=>$orderId, 'ts'=>time()]);
+
+        $token = base64_encode($this->encryptor->encrypt($payload));
+
+        $redirectUrl = $baseUrl . 'ipag/redirect/result?p=' . $token;
+
         $ipagOrder = $ipag->transaction()->getOrder()
             ->setOrderId($orderId)
             ->setCallbackUrl($callbackUrl)
+            ->setRedirectUrl($redirectUrl)
             ->setAmount($amount)
             ->setInstallments($installments)
             ->setPayment($payment)
