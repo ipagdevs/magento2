@@ -1,0 +1,183 @@
+<?php
+
+namespace Ipag\Payment\Delegator;
+
+class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
+{
+    const ROUND_UP = 100;
+
+    protected $_canAuthorize = true;
+
+    protected $_canCapture = true;
+
+    protected $_canRefund = true;
+
+    protected $_code = 'ipagcc';
+
+    protected $_isGateway = true;
+
+    protected $_canCapturePartial = false;
+
+    protected $_canRefundInvoicePartial = false;
+
+    protected $_canVoid = true;
+
+    protected $_canCancel = true;
+
+    protected $_canUseForMultishipping = false;
+
+    protected $_canFetchTransactionInfo = true;
+
+    protected $_countryFactory;
+
+    protected $_supportedCurrencyCodes = ['BRL'];
+
+    protected $_debugReplacePrivateDataKeys = ['number', 'exp_month', 'exp_year', 'cvc'];
+
+    protected $_cart;
+
+    protected $logger;
+
+    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Cc';
+
+    protected $_isInitializeNeeded = true;
+
+    protected $_canUseInternal = false;
+
+    protected $ccFactory;
+
+    protected $helperFactory;
+
+    protected $delegate = null;
+    protected $scopeConfig;
+
+    /**
+     * Constructor
+     * @param \Magento\Framework\App\RequestInterface $request
+     * @param \Magento\Framework\UrlInterface $urlBuilder
+     * @param \Ipag\Payment\Factory\CcFactory $ccFactory
+     * @param \Ipag\Payment\Factory\HelperFactory $helperFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Locale\ResolverInterface $resolver
+     * @param \Magento\Framework\Model\Context $context
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory
+     * @param \Magento\Payment\Helper\Data $paymentData
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Payment\Model\Method\Logger $logger
+     * @param \Magento\Checkout\Model\Session $session
+     * @param \Ipag\Payment\Logger\Logger $payexLogger
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param array $data
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+     */
+    public function __construct(
+        \Magento\Framework\App\RequestInterface $request,
+        \Magento\Framework\UrlInterface $urlBuilder,
+        \Ipag\Payment\Factory\CcFactory $ccFactory,
+        \Ipag\Payment\Factory\HelperFactory $helperFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\Locale\ResolverInterface $resolver,
+        \Magento\Framework\Model\Context $context,
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
+        \Magento\Payment\Helper\Data $paymentData,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Payment\Model\Method\Logger $logger,
+        \Magento\Framework\Module\ModuleListInterface $moduleList,
+        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
+        \Magento\Checkout\Model\Session $session,
+        \Magento\Checkout\Model\Cart $cart,
+        \Ipag\Payment\Logger\Logger $ipagLogger,
+        \Magento\Framework\DB\TransactionFactory $transaction,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Sales\Api\OrderManagementInterface $orderManagement,
+        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        array $data = []
+    ) {
+        parent::__construct(
+            $context,
+            $registry,
+            $extensionFactory,
+            $customAttributeFactory,
+            $paymentData,
+            $scopeConfig,
+            $logger,
+            $moduleList,
+            $localeDate,
+            $resource,
+            $resourceCollection,
+            $data
+        );
+        $this->scopeConfig = $scopeConfig;
+        $this->_cart = $cart;
+        $this->logger = $ipagLogger;
+        $this->_transaction = $transaction;
+        $this->_invoiceService = $invoiceService;
+        $this->orderManagement = $orderManagement;
+        $this->ccFactory = $ccFactory;
+        $this->helperFactory = $helperFactory;
+
+        $this->__initializeDelegate();
+    }
+
+    public function assignData(\Magento\Framework\DataObject $data)
+    {}
+
+    public function validate()
+    {}
+
+    public function initialize($paymentAction, $stateObject)
+    {
+        try {
+            $this->delegate->setInfoInstance($this->getInfoInstance());
+
+            $order = $this->getInfoInstance()->getOrder();
+            $payment = $order->getPayment();
+            $this->processPayment($payment);
+        } catch (\Exception $e) {
+            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
+        }
+    }
+
+    public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
+    {
+        return $this->delegate->postRequest($request, $config);
+    }
+
+    public function processPayment($payment)
+    {
+        return $this->delegate->processPayment($payment);
+    }
+
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {}
+
+    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
+    {
+        $selfActive = $this->isActive($quote?->getStoreId());
+        return $selfActive;
+    }
+
+    private function __initializeDelegate()
+    {
+        if ($this->delegate !== null) {
+            return;
+        }
+
+        $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+
+        $ccMethod = $this->ccFactory->createForVersion($version);
+
+        $helperData = $this->helperFactory->createForVersion($version);
+
+        $this->delegate = $ccMethod;
+
+        $this->delegate->setIpagHelper($helperData);
+    }
+}

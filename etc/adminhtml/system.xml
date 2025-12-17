@@ -19,6 +19,10 @@
                     <label>Ativar Identidade Visual iPag</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="apiVersion" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Versão da API</label>
+                    <source_model>Ipag\Payment\Block\Adminhtml\System\Config\ApiVersion</source_model>
+                </field>
                 <field id="version" translate="label" type="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Versão do Módulo</label>
                     <backend_model>Ipag\Payment\Block\Adminhtml\System\Config\Version</backend_model>

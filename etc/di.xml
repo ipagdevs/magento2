@@ -14,4 +14,17 @@
             </argument>
         </arguments>
     </type>
+    <type name="Ipag\Payment\Factory\HelperFactory">
+        <arguments>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Helper\DataFactory</argument>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Helper\V2\DataFactory</argument>
+        </arguments>
+    </type>
+    <type name="Ipag\Payment\Delegator\CardMethodDelegator">
+        <arguments>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Model\Method\V2\CcFactory</argument>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\CcFactory</argument>
+        </arguments>
+    </type>
+    <!-- Note: helper provider is injected into the switcher; individual method classes do not require it here -->
 </config>

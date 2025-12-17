@@ -2,13 +2,13 @@
 
 namespace Ipag\Payment\Model\Method;
 
+use Ipag\Ipag;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
-use Ipag\Ipag;
+use \Magento\Sales\Model\Order\Payment;
 use Magento\Quote\Api\Data\PaymentInterface;
 use \Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Model\Method\Online\GatewayInterface;
-use \Magento\Sales\Model\Order\Payment;
 
 class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterface
 {

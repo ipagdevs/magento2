@@ -7,6 +7,7 @@
                 <model>Ipag\Payment\Model\Method\Cc</model>
                 <environment_mode>production</environment_mode>
                 <show_logo>1</show_logo>
+                <apiVersion>v2</apiVersion>
                 <order_status>
                     <authorized>processing</authorized>
                     <approved>processing</approved>
@@ -33,7 +34,7 @@
                 </advanced>
             </ipagbase>
             <ipagcc>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>Ipag\Payment\Delegator\CardMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>
