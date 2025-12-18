@@ -29,6 +29,7 @@ class CcFactory
         if (($version === 'v2' || $version === '2') && $this->v2Factory !== null) {
             return $this->v2Factory->create();
         }
+
         return $this->v1Factory->create();
     }
 }

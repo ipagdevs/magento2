@@ -117,32 +117,33 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $this->_ipagHelper = $ipagHelper;
     }
 
+    public function initialize($paymentAction, $stateObject)
+    {
+        try {
+            $order = $this->getInfoInstance()->getOrder();
+            $payment = $order->getPayment();
+            $this->processPayment($payment);
+        } catch (\Exception $e) {
+            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
+        }
+    }
+
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
         return '';
     }
 
-    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
-    {
-        $selfActive = $this->isActive($quote?->getStoreId());
-        return $selfActive;
-    }
-
-    public function validate() {
-        $ipag = $this->_ipagHelper->AuthorizationValidate();
-        return $this;
-    }
-
     public function assignData(\Magento\Framework\DataObject $data) {
         parent::assignData($data);
+
+        $infoInstance = $this->getInfoInstance();
+        $currentData = $data->getAdditionalData();
         $additionalData = $data->getData(\Magento\Quote\Api\Data\PaymentInterface::KEY_ADDITIONAL_DATA);
 
         if (!is_array($additionalData)) {
             return $this;
         }
-
-        $infoInstance = $this->getInfoInstance();
-        $currentData = $data->getAdditionalData();
 
         foreach ($currentData as $key => $value) {
             if ($key === \Magento\Framework\Api\ExtensibleDataInterface::EXTENSION_ATTRIBUTES_KEY) {
@@ -152,5 +153,155 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         }
 
         return $this;
+    }
+
+    public function processPayment($payment)
+    {
+        $order = $payment->getOrder();
+
+        $provider = $this->preparePaymentProvider();
+
+        $InfoInstance = $this->getInfoInstance();
+        $items = $this->_cart->getQuote()->getAllItems();
+        $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
+        $installments = $InfoInstance->getAdditionalInformation('installments');
+        $deviceFingerprint = $InfoInstance->getAdditionalInformation('device_fingerprint');
+        $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
+
+        $total = $order->getGrandTotal() + $additionalPrice;
+
+        $transactionPayload = $this->prepareTransactionPayload(
+            $provider,
+            $InfoInstance,
+            $items,
+            $fingerprint,
+            $installments,
+            $deviceFingerprint,
+            $order,
+            $additionalPrice
+        );
+
+        $order->setTaxAmount($additionalPrice);
+        $order->setBaseTaxAmount($additionalPrice);
+        $order->setGrandTotal($total);
+        $order->setBaseGrandTotal($total);
+
+        if ($additionalPrice >= 0.01) {
+            $brl = 'R$';
+            $formatted = number_format($additionalPrice, '2', ',', '.');
+            $totalformatted = number_format($total, '2', ',', '.');
+            $InfoInstance->setAdditionalInformation('interest', $brl . $formatted);
+            $InfoInstance->setAdditionalInformation('total_with_interest', $brl . $totalformatted);
+        }
+
+        $quoteInstance = $this->_cart->getQuote()->getPayment();
+        $numero = $InfoInstance->getAdditionalInformation('cc_number');
+        $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
+        $quoteInstance->setAdditionalInformation(
+            'cc_number',
+            preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero)
+        );
+        $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
+
+        try {
+            $transactionResponse = $this->execTransaction($provider, $transactionPayload);
+        } catch (\Throwable $th) {
+            $this->logger->loginfo(self::class . " process payment error: " . $th->getMessage(), self::class . ' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $th->getMessage()));
+        }
+
+        $this->processPaymentInfoInstance($transactionResponse, $InfoInstance);
+
+        list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
+
+        $this->processPaymentOrder($order, $status, $message);
+
+        return $this;
+    }
+
+    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
+    {
+        try {
+            $order = $payment->getOrder();
+            $provider = $this->preparePaymentProvider();
+
+            $tid = $payment->getAdditionalInformation('tid');
+            $status = $payment->getAdditionalInformation('payment.status');
+            $captureAmount = ($amount > 0 && $amount != $order->getGrandTotal()) ? $amount : null;
+
+            if (empty($tid)) {
+                throw new \Magento\Framework\Exception\LocalizedException(__('TID not found.'));
+            }
+
+            if ($status != '5') {
+                throw new \Magento\Framework\Exception\LocalizedException(__('Payment not approved.'));
+            }
+
+            $captureResponse = $this->execCapture($provider, $tid, $captureAmount);
+
+            list($status,) = $this->prepareTransactionResponse($captureResponse);
+
+            if ($status != '8') {
+                throw new \Magento\Framework\Exception\LocalizedException(__('Capture failed. Status: ' . $status));
+            }
+
+            return $this;
+
+        } catch (\Throwable $th) {
+            throw new \Magento\Framework\Exception\LocalizedException(__('Capture Online Error: ' . $th->getMessage()));
+        }
+    }
+
+    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
+    {
+        $selfActive = $this->isActive($quote?->getStoreId());
+        return $selfActive;
+    }
+
+    public function validate() {
+        return $this->_ipagHelper->AuthorizationValidate();
+    }
+
+    abstract protected function prepareTransactionPayload(
+        $provider,
+        $InfoInstance,
+        $items,
+        $fingerprint,
+        $installments,
+        $deviceFingerprint,
+        $order,
+        $additionalPrice
+    );
+    abstract protected function execTransaction($provider, $providerPayload);
+    abstract protected function processPaymentInfoInstance($response, $InfoInstance);
+    abstract protected function prepareTransactionResponse($response);
+    abstract protected function execCapture($provider, $tid, $amount);
+
+    private function preparePaymentProvider()
+    {
+        try {
+            return $this->validate();
+        } catch (\Exception $e) {
+            $this->logger->loginfo(self::class . " preProcessPayment ERROR: " . $e->getMessage(), self::class . ' STATUS');
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
+        }
+    }
+
+    private function processPaymentOrder($order, $status, $comment) {
+        if (!$status)
+            $status = \Magento\Sales\Model\Order::STATE_NEW;
+
+        $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
+
+        $order->setStatus($status);
+
+        if ($state)
+            $order->setState($state);
+
+        $order->addStatusHistoryComment(
+            __('iPag response: Status: %1, Message: %2.', $status, $comment)
+        )->setIsCustomerNotified(false);
+
+        $order->save();
     }
 }

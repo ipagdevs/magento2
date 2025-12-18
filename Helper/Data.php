@@ -18,134 +18,22 @@ final class Data extends AbstractData
         return $ipag;
     }
 
-    public function generateCustomerIpag($ipag, $order)
+    public function generateCustomerIpag($ipag, $customerOrder)
     {
-        $customerId = $order->getCustomerId();
-        $customerData = !empty($customerId) ? $this->customerFactory->create()->load($customerId)->toArray() : [];
-
-        if (!$order->getCustomerFirstname()) {
-            $name = $order->getBillingAddress()->getName();
-        } else {
-            $name = $order->getCustomerFirstname() . ' ' . $order->getCustomerLastname();
-        }
-
-        $type_cpf = $this->getTypeForCpf();
-
-        if ($type_cpf === "customer") {
-            $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
-            $_taxvat = $order->getData('customer_' . $attribute_cpf_customer);
-            if (empty($_taxvat) && !empty($customerData)) {
-                if (array_key_exists($attribute_cpf_customer, $customerData)) {
-                    $_taxvat = $customerData[$attribute_cpf_customer];
-                }
-            }
-        } else {
-            $attribute_cpf_address = $this->getCpfAttributeForAddress();
-            $_taxvat = $order->getBillingAddress()->getData($attribute_cpf_address);
-        }
-
-        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
-
-        $type_cnpj = $this->getTypeForCNPJ();
-
-        if ($type_cnpj === "use_cpf") {
-
-            if (strlen($taxvat) > 11) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            } else {
-                $_typedocument = "CPF";
-            }
-        } elseif ($type_cnpj === "use_customer") {
-            $attribute_cnpj = $this->getCNPJAttributeForCustomer();
-            $_taxvat = $order->getData('customer_' . $attribute_cnpj);
-            if (empty($_taxvat) && !empty($customerData)) {
-                if (array_key_exists($attribute_cnpj, $customerData)) {
-                    $_taxvat = $customerData[$attribute_cnpj];
-                }
-            }
-            if ($_taxvat) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            }
-        } elseif ($type_cnpj === "use_address") {
-            $attribute_cnpj_address = $this->getCNPJAttributeForAddress();
-            $_taxvat = $order->getBillingAddress()->getData($attribute_cnpj_address);
-            if ($_taxvat) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            }
-        }
-
-        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
-
-        $email = $order->getCustomerEmail();
-
-        $ddd_telephone = $this->getNumberOrDDD($order->getBillingAddress()->getTelephone(), true);
-        $number_telephone = $this->getNumberOrDDD($order->getBillingAddress()->getTelephone(), false);
-
-        $street_billing = $order->getBillingAddress()->getStreet();
-
-        $city_billing = $order->getBillingAddress()->getData('city');
-
-        $region_billing = $order->getBillingAddress()->getRegionCode();
-
-        $postcode_billing = substr(preg_replace("/[^0-9]/", "", (string) $order->getBillingAddress()->getData('postcode')) . '00000000', 0, 8);
-
-        $billing_logradouro = $street_billing[$this->getStreetPositionLogradouro()];
-
-        $billing_number = 
-            array_key_exists($this->getStreetPositionNumber(), $street_billing) ?
-                $street_billing[$this->getStreetPositionNumber()] : '';
-
-        if (count($street_billing) >= 3 && array_key_exists($this->getStreetPositionDistrict(), $street_billing)) {
-            $billing_district = $street_billing[$this->getStreetPositionDistrict()];
-        } else {
-            $billing_district = $street_billing[$this->getStreetPositionLogradouro()];
-        }
-
-        if (count($street_billing) == 4) {
-            $billing_complemento = $street_billing[$this->getStreetPositionComplemento()];
-        } else {
-            $billing_complemento = "";
-        }
+        list (
+            $name,
+            $taxvat,
+            $email,
+            $ddd_telephone,
+            $number_telephone,
+            $billing_logradouro,
+            $billing_district,
+            $billing_number,
+            $city_billing,
+            $region_billing,
+            $postcode_billing,
+            $billing_complemento
+        ) = $customerOrder;
 
         $customer = $ipag->customer()
             ->setName($name)
@@ -162,6 +50,7 @@ final class Data extends AbstractData
                     ->setZipCode($postcode_billing)
                     ->setComplement($billing_complemento)
             );
+
         return $customer;
     }
 
@@ -240,14 +129,16 @@ final class Data extends AbstractData
         return $payment;
     }
 
-    public function addPayCcIpag($ipag, $InfoInstance)
+    public function addPayCcIpag($ipag, $cardOrder)
     {
-        $nome = $InfoInstance->getAdditionalInformation('fullname');
-        $numero = $InfoInstance->getAdditionalInformation('cc_number');
-        $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
-        $mes = $InfoInstance->getAdditionalInformation('cc_exp_month');
-        $ano = $InfoInstance->getAdditionalInformation('cc_exp_year');
-        $bandeira = $InfoInstance->getAdditionalInformation('cc_type');
+        list (
+            $nome,
+            $numero,
+            $cvv,
+            $mes,
+            $ano,
+            $bandeira
+        ) = $cardOrder;
 
         $hidden = $ipag->creditCard()
             ->setNumber($numero)
@@ -264,9 +155,6 @@ final class Data extends AbstractData
                     ->setExpiryYear($ano)
                     ->setCvc($cvv)
             );
-
-        $InfoInstance->setAdditionalInformation('cc_number', $hidden->getNumber());
-        $InfoInstance->setAdditionalInformation('cc_cid', $hidden->getCvc());
 
         return $payment;
     }

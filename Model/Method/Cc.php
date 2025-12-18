@@ -22,151 +22,107 @@ class Cc extends AbstractCc
         return parent::validate();
     }
 
+    protected function prepareTransactionPayload(
+        $provider,
+        $InfoInstance,
+        $items,
+        $fingerprint,
+        $installments,
+        $deviceFingerprint,
+        $order,
+        $additionalPrice
+    ) {
+        $cart = $this->_ipagHelper->addProductItemsIpag($provider, $items);
+
+        $customerOrder = $this->_ipagHelper->getCustomerDataFromOrder($order);
+
+        $customer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
+
+        $cardOrder = $this->_ipagHelper->getCardDataFromInfoInstance($InfoInstance);
+
+        $ipagPayment = $this->_ipagHelper->addPayCcIpag($provider, $cardOrder);
+
+        $ipagOrder = $this->_ipagHelper->createOrderIpag(
+            $order,
+            $provider,
+            $cart,
+            $ipagPayment,
+            $customer,
+            $additionalPrice,
+            $installments,
+            $fingerprint,
+            $deviceFingerprint
+        );
+
+        return $ipagOrder;
+    }
+
     public function processPayment($payment)
     {
-        $order = $payment->getOrder();
+        return parent::processPayment($payment);
+    }
 
-        try {
-            $ipag = $this->_ipagHelper->AuthorizationValidate();
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    protected function execTransaction($provider, $payload) {
+        $this->logger->loginfo($payload, self::class . ' REQUEST');
 
-            $customer = $this->_ipagHelper->generateCustomerIpag($ipag, $order);
+        $response = $provider->transaction()->setOrder($payload)->execute();
 
-            try {
-                $items = $this->_cart->getQuote()->getAllItems();
-                $InfoInstance = $this->getInfoInstance();
-                $cart = $this->_ipagHelper->addProductItemsIpag($ipag, $items);
-                $installments = $InfoInstance->getAdditionalInformation('installments');
-                $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
-                $deviceFingerprint = $InfoInstance->getAdditionalInformation('device_fingerprint');
+        $json = json_decode(json_encode($response), true);
 
-                $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
+        $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
 
-                $total = $order->getGrandTotal() + $additionalPrice;
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+            throw new \Exception($json['errorMessage']);
 
-                $ipagPayment = $this->_ipagHelper->addPayCcIpag($ipag, $InfoInstance);
-                $ipagOrder = $this->_ipagHelper->createOrderIpag(
-                    $order,
-                    $ipag,
-                    $cart,
-                    $ipagPayment,
-                    $customer,
-                    $additionalPrice,
-                    $installments,
-                    $fingerprint,
-                    $deviceFingerprint
-                );
+        return $json;
+    }
 
-                $order->setTaxAmount($additionalPrice);
-                $order->setBaseTaxAmount($additionalPrice);
-                $order->setGrandTotal($total);
-                $order->setBaseGrandTotal($total);
-
-                if ($additionalPrice >= 0.01) {
-                    $brl = 'R$';
-                    $formatted = number_format($additionalPrice, '2', ',', '.');
-                    $totalformatted = number_format($total, '2', ',', '.');
-                    $InfoInstance->setAdditionalInformation('interest', $brl . $formatted);
-                    $InfoInstance->setAdditionalInformation('total_with_interest', $brl . $totalformatted);
+    protected function processPaymentInfoInstance($responseJson, $InfoInstance) {
+        foreach ($responseJson as $j => $k) {
+            if (is_array($k)) {
+                foreach ($k as $l => $m) {
+                    $name = $j . '.' . $l;
+                    $responseJson[$name] = $m;
+                    $InfoInstance->setAdditionalInformation($name, $m);
                 }
-
-                $quoteInstance = $this->_cart->getQuote()->getPayment();
-                $numero = $InfoInstance->getAdditionalInformation('cc_number');
-                $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
-                $quoteInstance->setAdditionalInformation(
-                    'cc_number',
-                    preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero)
-                );
-                $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
-
-                $this->logger->loginfo($ipagOrder, self::class . ' REQUEST');
-                $response = $ipag->transaction()->setOrder($ipagOrder)->execute();
-
-                $json = json_decode(json_encode($response), true);
-                $this->logger->loginfo([$response], self::class . ' RESPONSE RAW');
-                $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
-
-                if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
-                    throw new \Exception($json['errorMessage']);
-
-                foreach ($json as $j => $k) {
-                    if (is_array($k)) {
-                        foreach ($k as $l => $m) {
-                            $name = $j . '.' . $l;
-                            $json[$name] = $m;
-                            $InfoInstance->setAdditionalInformation($name, $m);
-                        }
-                        unset($json[$j]);
-                    } else {
-                        $InfoInstance->setAdditionalInformation($j, $k);
-                    }
-                }
-
-                $status  = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($json['payment.status']);
-
-                if (!$status)
-                    $status = \Magento\Sales\Model\Order::STATE_NEW;
-
-                $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
-
-                $order->setStatus($status);
-
-                if ($state)
-                    $order->setState($state);
-
-                if (!is_null($response)) {
-                    $order->addStatusHistoryComment(
-                        __(
-                            'iPag response: Status: %1, Message: %2.',
-                            $response->payment->status,
-                            $response->payment->message
-                        )
-                    )->setIsCustomerNotified(false);
-                }
-                $order->save();
-
-                $this->logger->loginfo($state, self::class . ' STATE');
-                $this->logger->loginfo($status, self::class . ' STATUS');
-            } catch (\Exception $e) {
-                throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
+                unset($responseJson[$j]);
+            } else {
+                $InfoInstance->setAdditionalInformation($j, $k);
             }
-        } catch (\Exception $e) {
-            throw new LocalizedException(__('Payment failed ' . $e->getMessage()));
         }
-        return $this;
+    }
+
+    protected function prepareTransactionResponse($response) {
+        $status = isset($response['payment']) && isset($response['payment']['status']) ? $response['payment']['status'] : null;
+        $message = isset($response['payment']) && isset($response['payment']['message']) ? $response['payment']['message'] : null;
+
+        return [$status, $message];
     }
 
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-        try {
-            $order = $payment->getOrder();
-            $ipag = $this->_ipagHelper->AuthorizationValidate();
-            $tid = $payment->getAdditionalInformation('tid');
-            $status = $payment->getAdditionalInformation('payment.status');
-            if (!is_null($tid)) {
-                if ($status == '5') {
-                    $transaction = $ipag->transaction()->setTid($tid);
-                    if ($amount > 0 && $amount != $order->getGrandTotal()) {
-                        $transaction->setAmount($amount);
-                    }
-                    $response = $transaction->capture();
-                    if (!empty($response->errorMessage)) {
-                        throw new \Exception($response->errorMessage);
-                    }
-                    if ($response->payment->status != '8') {
-                        throw new \Exception('Ocorreu um erro na captura, por favor, verifique a transação no Painel iPag');
-                    }
-                } else {
-                    throw new \Exception('O status do pagamento não permite captura online! Tente capturar offline');
-                }
-            } else {
-                throw new \Exception('TID não encontrado! Tente capturar offline!');
-            }
-        } catch (\Exception $e) {
-            throw new LocalizedException(__('Capture Online Error: ' . $e->getMessage()));
+        return parent::capture($payment, $amount);
+    }
+
+    protected function execCapture($provider, $tid, $amount = null) {
+        $this->logger->loginfo("Capture TID: $tid Amount: $amount", self::class . ' CAPTURE REQUEST');
+
+        $transaction = $provider->transaction()->setTid($tid);
+
+        if ($amount !== null) {
+            $transaction->setAmount($amount);
         }
 
-        return $this;
+        $responseCapture = $transaction->capture();
+
+        $json = json_decode(json_encode($responseCapture), true);
+
+        $this->logger->loginfo($json, self::class . ' CAPTURE RESPONSE JSON');
+
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+            throw new \Exception($json['errorMessage']);
+
+        return $json;
     }
 
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)

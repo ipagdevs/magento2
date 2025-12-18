@@ -125,43 +125,43 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
         $this->__initializeDelegate();
     }
 
-    public function assignData(\Magento\Framework\DataObject $data)
-    {}
-
     public function validate()
-    {}
+    {
+        return $this->delegate->validate();
+    }
+
+    public function assignData(\Magento\Framework\DataObject $data)
+    {
+        $this->delegate->setInfoInstance($this->getInfoInstance());
+        return $this->delegate->assignData($data);
+    }
 
     public function initialize($paymentAction, $stateObject)
     {
-        try {
-            $this->delegate->setInfoInstance($this->getInfoInstance());
-
-            $order = $this->getInfoInstance()->getOrder();
-            $payment = $order->getPayment();
-            $this->processPayment($payment);
-        } catch (\Exception $e) {
-            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
-            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
-        }
+        $this->delegate->setInfoInstance($this->getInfoInstance());
+        return $this->delegate->initialize($paymentAction, $stateObject);
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
+        $this->delegate->setInfoInstance($this->getInfoInstance());
         return $this->delegate->postRequest($request, $config);
     }
 
     public function processPayment($payment)
     {
+        $this->delegate->setInfoInstance($this->getInfoInstance());
         return $this->delegate->processPayment($payment);
     }
 
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {}
+    {
+        return $this->delegate->capture($payment, $amount);
+    }
 
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
-        $selfActive = $this->isActive($quote?->getStoreId());
-        return $selfActive;
+        return $this->delegate->isAvailable($quote);
     }
 
     private function __initializeDelegate()
