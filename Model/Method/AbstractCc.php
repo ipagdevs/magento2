@@ -119,14 +119,9 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
     public function initialize($paymentAction, $stateObject)
     {
-        try {
-            $order = $this->getInfoInstance()->getOrder();
-            $payment = $order->getPayment();
-            $this->processPayment($payment);
-        } catch (\Exception $e) {
-            $this->logger->loginfo(self::class . " initialize ERROR: " . $e->getMessage(), self::class . ' STATUS');
-            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
-        }
+        $order = $this->getInfoInstance()->getOrder();
+        $payment = $order->getPayment();
+        $this->processPayment($payment);
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
@@ -166,19 +161,21 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
         $installments = $InfoInstance->getAdditionalInformation('installments');
         $deviceFingerprint = $InfoInstance->getAdditionalInformation('device_fingerprint');
+
+        $orderCard = $this->_ipagHelper->getCardDataFromInfoInstance($InfoInstance);
         $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
 
         $total = $order->getGrandTotal() + $additionalPrice;
 
         $transactionPayload = $this->prepareTransactionPayload(
             $provider,
-            $InfoInstance,
+            $orderCard,
             $items,
             $fingerprint,
             $installments,
             $deviceFingerprint,
             $order,
-            $additionalPrice
+            $total
         );
 
         $order->setTaxAmount($additionalPrice);
@@ -203,17 +200,13 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         );
         $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
 
-        try {
-            $transactionResponse = $this->execTransaction($provider, $transactionPayload);
-        } catch (\Throwable $th) {
-            $this->logger->loginfo(self::class . " process payment error: " . $th->getMessage(), self::class . ' STATUS');
-            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $th->getMessage()));
-        }
+        $transactionResponse = $this->execTransaction($provider, $transactionPayload);
 
-        $this->processPaymentInfoInstance($transactionResponse, $InfoInstance);
+        $this->registerAdditionalInfoTransactionData($transactionResponse, $InfoInstance);
 
         list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
 
+        //@NOTE: BUG - a seguinte função não está atualizando o status do pedido no magento.
         $this->processPaymentOrder($order, $status, $message);
 
         return $this;
@@ -264,34 +257,30 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
     abstract protected function prepareTransactionPayload(
         $provider,
-        $InfoInstance,
+        $orderCard,
         $items,
         $fingerprint,
         $installments,
         $deviceFingerprint,
         $order,
-        $additionalPrice
+        $total
     );
     abstract protected function execTransaction($provider, $providerPayload);
-    abstract protected function processPaymentInfoInstance($response, $InfoInstance);
     abstract protected function prepareTransactionResponse($response);
     abstract protected function execCapture($provider, $tid, $amount);
 
     private function preparePaymentProvider()
     {
-        try {
-            return $this->validate();
-        } catch (\Exception $e) {
-            $this->logger->loginfo(self::class . " preProcessPayment ERROR: " . $e->getMessage(), self::class . ' STATUS');
-            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed ' . $e->getMessage()));
-        }
+        return $this->validate();
     }
 
-    private function processPaymentOrder($order, $status, $comment) {
+    private function processPaymentOrder($order, $paymentStatus, $comment) {
+        $status  = \Ipag\Payment\Helper\AbstractData::translatePaymentStatusToOrderStatus($paymentStatus);
+
         if (!$status)
             $status = \Magento\Sales\Model\Order::STATE_NEW;
 
-        $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
+        $state = \Ipag\Payment\Helper\AbstractData::getStateFromStatus($status);
 
         $order->setStatus($status);
 
@@ -303,5 +292,20 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         )->setIsCustomerNotified(false);
 
         $order->save();
+    }
+
+    protected function registerAdditionalInfoTransactionData($responseJson, $InfoInstance) {
+        foreach ($responseJson as $j => $k) {
+            if (is_array($k)) {
+                foreach ($k as $l => $m) {
+                    $name = $j . '.' . $l;
+                    $responseJson[$name] = $m;
+                    $InfoInstance->setAdditionalInformation($name, $m);
+                }
+                unset($responseJson[$j]);
+            } else {
+                $InfoInstance->setAdditionalInformation($j, $k);
+            }
+        }
     }
 }

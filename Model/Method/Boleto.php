@@ -248,7 +248,7 @@ class Boleto extends \Magento\Payment\Model\Method\Cc implements GatewayInterfac
                     $cart = $this->_ipagHelper->addProductItemsIpag($ipag, $items);
 
                     $ipagPayment = $this->_ipagHelper->addPayBoletoIpag($ipag, $InfoInstance);
-                    $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer, 0, 1);
+                    $ipagOrder = $this->_ipagHelper->createOrderIpag($order, $ipag, $cart, $ipagPayment, $customer, $order->getGrandTotal(), 1);
 
                     $this->logger->loginfo($ipagOrder, self::class . ' REQUEST');
                     $response = $ipag->transaction()->setOrder($ipagOrder)->execute();

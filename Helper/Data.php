@@ -54,28 +54,23 @@ final class Data extends AbstractData
         return $customer;
     }
 
-    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '', $deviceFingerprint = '')
+    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $total, $installments, $fingerprint = '', $deviceFingerprint = '')
     {
-        $baseUrl = $this->_storeManager->getStore()->getBaseUrl();
-
         $number_date = $this->getDueNumber();
+
         $expiration_date = $this->getDateDue($number_date);
+
         $orderId = $order->getIncrementId();
-        $amount = $order->getGrandTotal() + $additionalPrice;
 
-        $callbackUrl = $baseUrl . 'ipag/notification/Callback';
+        $callbackUrl = $this->buildCallbackUrl();
 
-        $payload = json_encode(['order'=>$orderId, 'ts'=>time()]);
-
-        $token = base64_encode($this->encryptor->encrypt($payload));
-
-        $redirectUrl = $baseUrl . 'ipag/redirect/result?p=' . $token;
+        $redirectUrl = $this->buildRedirectUrl(['order' => $orderId, 'ts' => time()]);
 
         $ipagOrder = $ipag->transaction()->getOrder()
             ->setOrderId($orderId)
             ->setCallbackUrl($callbackUrl)
             ->setRedirectUrl($redirectUrl)
-            ->setAmount($amount)
+            ->setAmount($total)
             ->setInstallments($installments)
             ->setPayment($payment)
             ->setCustomer($customer)

@@ -3,6 +3,8 @@
 namespace Ipag\Payment\Model\Method\V2;
 
 use Ipag\Payment\Model\Method\AbstractCc;
+use Ipag\Payment\Model\Support\MaskUtils;
+use Ipag\Payment\Exception\IpagPaymentCcException;
 
 class Cc extends AbstractCc
 {
@@ -30,13 +32,13 @@ class Cc extends AbstractCc
 
     protected function prepareTransactionPayload(
         $provider,
-        $InfoInstance,
+        $orderCard,
         $items,
         $fingerprint,
         $installments,
         $deviceFingerprint,
         $order,
-        $additionalPrice
+        $total
     ) {
         $customerOrder = $this->_ipagHelper->getCustomerDataFromOrder($order);
 
@@ -44,20 +46,51 @@ class Cc extends AbstractCc
 
         $transactionCustomer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
 
-        $cardOrder = $this->_ipagHelper->getCardDataFromInfoInstance($InfoInstance);
+        $transactionPayment = $this->_ipagHelper->addPayCcIpag($provider, $orderCard);
 
-        $transactionPayment = $this->_ipagHelper->addPayCcIpag($provider, $cardOrder);
+        $transactionOrder = $this->_ipagHelper->createOrderIpag(
+            $order,
+            $provider,
+            $transactionProducts,
+            $transactionPayment,
+            $transactionCustomer,
+            $total,
+            $installments,
+            $fingerprint,
+            $deviceFingerprint
+        );
 
-        var_dump($transactionPayment); exit;
+        return $transactionOrder;
     }
 
     protected function execTransaction($provider, $payload) {
-    }
+        $maskedPayload = MaskUtils::applyMaskRecursive($payload->jsonSerialize());
 
-    protected function processPaymentInfoInstance($responseJson, $InfoInstance) {
+        $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
+
+        try {
+
+            $responsePayment = $provider->payment()->create($payload);
+
+            $data = $responsePayment->getData();
+
+            $maskedResponseData = MaskUtils::applyMaskRecursive($data);
+
+            $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
+
+            return $maskedResponseData['attributes'];
+
+        } catch (\Throwable $th) {
+            throw new IpagPaymentCcException('Error executing Cc transaction', 0, $th);
+        }
+
     }
 
     protected function prepareTransactionResponse($response) {
+        $status = isset($response['status']) && isset($response['status']['code']) ? $response['status']['code'] : null;
+        $message = isset($response['acquirer']) && isset($response['acquirer']['message']) ? $response['acquirer']['message'] : null;
+
+        return [$status, $message];
     }
 
     protected function execCapture($provider, $tid, $amount = null) {

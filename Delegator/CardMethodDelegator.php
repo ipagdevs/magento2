@@ -127,7 +127,12 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
 
     public function validate()
     {
-        return $this->delegate->validate();
+        try {
+            return $this->delegate->validate();
+        } catch (\Throwable $th) {
+            $this->logger->error('CC delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
+        }
     }
 
     public function assignData(\Magento\Framework\DataObject $data)
@@ -138,8 +143,13 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
 
     public function initialize($paymentAction, $stateObject)
     {
-        $this->delegate->setInfoInstance($this->getInfoInstance());
-        return $this->delegate->initialize($paymentAction, $stateObject);
+        try {
+            $this->delegate->setInfoInstance($this->getInfoInstance());
+            return $this->delegate->initialize($paymentAction, $stateObject);
+        } catch (\Throwable $th) {
+            $this->logger->error('CC delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
+        }
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
@@ -150,8 +160,13 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
 
     public function processPayment($payment)
     {
-        $this->delegate->setInfoInstance($this->getInfoInstance());
-        return $this->delegate->processPayment($payment);
+        try {
+            $this->delegate->setInfoInstance($this->getInfoInstance());
+            return $this->delegate->processPayment($payment);
+        } catch (\Throwable $th) {
+            $this->logger->error('CC delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed. Contact support.'));
+        }
     }
 
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)

@@ -3,6 +3,8 @@
 namespace Ipag\Payment\Model\Method;
 
 use Ipag\Ipag;
+use Ipag\Payment\Model\Support\MaskUtils;
+use Ipag\Payment\Exception\IpagPaymentCcException;
 use \Magento\Framework\Exception\LocalizedException;
 
 class Cc extends AbstractCc
@@ -24,13 +26,13 @@ class Cc extends AbstractCc
 
     protected function prepareTransactionPayload(
         $provider,
-        $InfoInstance,
+        $orderCard,
         $items,
         $fingerprint,
         $installments,
         $deviceFingerprint,
         $order,
-        $additionalPrice
+        $total
     ) {
         $cart = $this->_ipagHelper->addProductItemsIpag($provider, $items);
 
@@ -38,9 +40,7 @@ class Cc extends AbstractCc
 
         $customer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
 
-        $cardOrder = $this->_ipagHelper->getCardDataFromInfoInstance($InfoInstance);
-
-        $ipagPayment = $this->_ipagHelper->addPayCcIpag($provider, $cardOrder);
+        $ipagPayment = $this->_ipagHelper->addPayCcIpag($provider, $orderCard);
 
         $ipagOrder = $this->_ipagHelper->createOrderIpag(
             $order,
@@ -48,7 +48,7 @@ class Cc extends AbstractCc
             $cart,
             $ipagPayment,
             $customer,
-            $additionalPrice,
+            $total,
             $installments,
             $fingerprint,
             $deviceFingerprint
@@ -63,33 +63,22 @@ class Cc extends AbstractCc
     }
 
     protected function execTransaction($provider, $payload) {
-        $this->logger->loginfo($payload, self::class . ' REQUEST');
+        $maskedPayload = MaskUtils::applyMaskRecursive($payload->serialize());
+
+        $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
 
         $response = $provider->transaction()->setOrder($payload)->execute();
 
         $json = json_decode(json_encode($response), true);
 
-        $this->logger->loginfo($json, self::class . ' RESPONSE JSON');
+        $maskedResponseData = MaskUtils::applyMaskRecursive($json);
+
+        $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
-            throw new \Exception($json['errorMessage']);
+            throw new IpagPaymentCcException($json['errorMessage']);
 
         return $json;
-    }
-
-    protected function processPaymentInfoInstance($responseJson, $InfoInstance) {
-        foreach ($responseJson as $j => $k) {
-            if (is_array($k)) {
-                foreach ($k as $l => $m) {
-                    $name = $j . '.' . $l;
-                    $responseJson[$name] = $m;
-                    $InfoInstance->setAdditionalInformation($name, $m);
-                }
-                unset($responseJson[$j]);
-            } else {
-                $InfoInstance->setAdditionalInformation($j, $k);
-            }
-        }
     }
 
     protected function prepareTransactionResponse($response) {
@@ -120,7 +109,7 @@ class Cc extends AbstractCc
         $this->logger->loginfo($json, self::class . ' CAPTURE RESPONSE JSON');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
-            throw new \Exception($json['errorMessage']);
+            throw new IpagPaymentCcException($json['errorMessage']);
 
         return $json;
     }

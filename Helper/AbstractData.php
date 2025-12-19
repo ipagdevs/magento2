@@ -87,10 +87,12 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $nome = $InfoInstance->getAdditionalInformation('fullname');
         $numero = $InfoInstance->getAdditionalInformation('cc_number');
-        $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
         $mes = $InfoInstance->getAdditionalInformation('cc_exp_month');
         $ano = $InfoInstance->getAdditionalInformation('cc_exp_year');
         $bandeira = $InfoInstance->getAdditionalInformation('cc_type');
+        $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
+
+        $installments = $InfoInstance->getAdditionalInformation('installments');
 
         $numeroMascarado = preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero);
         $cvvMascarado = preg_replace('/\d/', '*', $cvv);
@@ -104,7 +106,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             $cvv,
             $mes,
             $ano,
-            $bandeira
+            $bandeira,
+            $installments
         ];
     }
 
@@ -254,7 +257,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 
     abstract public function AuthorizationValidate();
     abstract public function generateCustomerIpag($ipag, $customerOrder);
-    abstract public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '', $deviceFingerprint = '');
+    abstract public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $total, $installments, $fingerprint = '', $deviceFingerprint = '');
     abstract public function addProductItemsIpag($ipag, $items);
     abstract public function addPayBoletoIpag($ipag, $InfoInstance);
     abstract public function addPayPixIpag($ipag, $InfoInstance);
@@ -696,6 +699,22 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     public function getStoreUrl()
     {
         return $this->_storeManager->getStore()->getBaseUrl();
+    }
+
+    public function buildCallbackUrl()
+    {
+        return $this->getStoreUrl() . 'ipag/notification/Callback';
+    }
+
+    public function buildRedirectUrl($payload = [])
+    {
+        $payload = json_encode($payload);
+
+        $token = base64_encode($this->encryptor->encrypt($payload));
+
+        $redirectUrl = $this->getStoreUrl() . 'ipag/redirect/result?p=' . $token;
+
+        return $redirectUrl;
     }
 
     /**

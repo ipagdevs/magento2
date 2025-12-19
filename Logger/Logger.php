@@ -2,18 +2,15 @@
 
 namespace Ipag\Payment\Logger;
 
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger as Monologger;
+use Monolog\Handler\StreamHandler;
 
 class Logger extends Monologger
 {
-    protected $logger;
-
     public function __construct()
     {
-        $logger = new Monologger('ipag');
-        $logger->pushHandler(new StreamHandler(BP.'/var/log/ipag/ipag-'.date('Y-m-d').'.log', Monologger::INFO));
-        $this->logger = $logger;
+        $handler = new StreamHandler(BP . '/var/log/ipag/ipag-' . date('Y-m-d') . '.log', Monologger::INFO);
+        parent::__construct('ipag', [$handler]);
     }
 
     public function loginfo($data, $info = '')
@@ -27,9 +24,9 @@ class Logger extends Monologger
         }
         $array = self::array_filter_recursive($json);
         if (is_array($array)) {
-            $this->logger->info($info, $array);
+            $this->info($info, $array);
         } else {
-            $this->logger->info(var_export($array, true), []);
+            $this->info(var_export($array, true), []);
         }
     }
 

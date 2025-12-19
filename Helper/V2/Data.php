@@ -3,6 +3,7 @@
 namespace Ipag\Payment\Helper\V2;
 
 use Ipag\Payment\Helper\AbstractData;
+use Ipag\Payment\Exception\IpagPaymentException;
 
 final class Data extends AbstractData
 {
@@ -34,7 +35,7 @@ final class Data extends AbstractData
         $credentialsApiId = $this->getIdentification();
 
         if (empty($credentialsApiKey) || empty($credentialsApiId)) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('iPag SDK crendentials are not properly configured.'));
+            throw new IpagPaymentException('iPag SDK crendentials are not properly configured.');
         }
 
         return [ $credentialsApiKey, $credentialsApiId ];
@@ -122,25 +123,72 @@ final class Data extends AbstractData
 
     public function addPayCcIpag($ipag, $cardOrder)
     {
+        list (
+            $nome,
+            $numero,
+            $cvv,
+            $mes,
+            $ano,
+            $bandeira,
+            $installments
+        ) = $cardOrder;
+
         $payment = new \Ipag\Sdk\Model\Payment([
             'type' => 'card',
-            'method' => 'visa',
-            'installments' => 1,
+            'method' => $bandeira,
             'fraud_analysis' => true,
-            'softdescriptor' => 'Maria José',
+            'installments' => $installments,
             'card' => [
-                'holder' => 'Maria José',
-                'number' => '123456789',
-                'expiry_month' => '01',
-                'expiry_year' => '28',
-                'cvv' => '123',
-                'brand' => 'visa'
+                'holder' => $nome,
+                'number' => $numero,
+                'expiry_month' => $mes,
+                'expiry_year' => $ano,
+                'brand' => $bandeira,
+                'cvv' => $cvv,
             ]
         ]);
+
+        return $payment;
     }
 
-    public function createOrderIpag($order, $ipag, $cart, $payment, $customer, $additionalPrice, $installments, $fingerprint = '', $deviceFingerprint = '')
-    {}
+    public function createOrderIpag(
+        $order,
+        $ipag,
+        $cart,
+        $payment,
+        $customer,
+        $total,
+        $installments,
+        $fingerprint = '',
+        $deviceFingerprint = ''
+    ) {
+        $orderId = $order->getIncrementId();
+
+        $callbackUrl = $this->buildCallbackUrl();
+
+        $redirectUrl = $this->buildRedirectUrl(['order' => $orderId, 'ts' => time()]);
+
+        $paymentTransaction = new \Ipag\Sdk\Model\PaymentTransaction(
+            [
+                'amount' => $total,
+                'products' => $cart,
+                'payment' => $payment,
+                'order_id' => $orderId,
+                'customer' => $customer,
+                'callback_url' => $callbackUrl,
+                'redirect_url' => $redirectUrl,
+            ]
+        );
+
+        if (!empty($fingerprint)) {
+            $paymentTransaction->setAntifraud(new \Ipag\Sdk\Model\PaymentAntifraud([
+                    'fingerprint' => $deviceFingerprint,
+                ])
+            );
+        }
+
+        return $paymentTransaction;
+    }
 
     public function addPayBoletoIpag($ipag, $InfoInstance)
     {}
