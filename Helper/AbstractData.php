@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Helper;
 
+use Ipag\Payment\Exception\IpagPaymentException;
+
 abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 {
     protected $_scopeConfig;
@@ -74,6 +76,14 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Customer\Model\CustomerFactory $customerFactory,
         \Magento\Framework\Encryption\EncryptorInterface $encryptor
     ) {
+        if (!class_exists($this->getSDKProviderClassName())) {
+            throw new IpagPaymentException(
+                \sprintf('iPag SDK (%s) is not installed or autoloadable. Please run: composer require the SDK package.',
+                    $this->getSDKProviderClassName()
+                )
+            );
+        }
+
         $this->_scopeConfig = $scopeConfig;
         $this->_objectManager = $objectManager;
         $this->date = $date;
@@ -110,6 +120,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             $installments
         ];
     }
+
+    abstract protected function getSDKProviderClassName();
 
     public function getCustomerDataFromOrder($order) {
         $customerId = $order->getCustomerId();

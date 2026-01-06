@@ -2,10 +2,8 @@
 
 namespace Ipag\Payment\Model\Method;
 
-use Ipag\Ipag;
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Exception\IpagPaymentCcException;
-use \Magento\Framework\Exception\LocalizedException;
 
 class Cc extends AbstractCc
 {

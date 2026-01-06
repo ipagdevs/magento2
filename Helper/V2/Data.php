@@ -13,6 +13,11 @@ final class Data extends AbstractData
         return $this->implementationVersion;
     }
 
+    protected function getSDKProviderClassName()
+    {
+        return '\Ipag\Sdk\Core\IpagClient';
+    }
+
     // Add v2-specific helper overrides below as needed.
 
     public function AuthorizationValidate()

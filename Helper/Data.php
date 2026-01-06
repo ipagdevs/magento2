@@ -4,6 +4,12 @@ namespace Ipag\Payment\Helper;
 
 final class Data extends AbstractData
 {
+
+    protected function getSDKProviderClassName()
+    {
+        return '\Ipag\Ipag';
+    }
+
     public function AuthorizationValidate()
     {
         $_environment = $this->getEnvironmentMode();

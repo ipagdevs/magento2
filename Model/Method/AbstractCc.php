@@ -122,7 +122,22 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $order = $this->getInfoInstance()->getOrder();
         $payment = $order->getPayment();
         $this->processPayment($payment);
+
+        $status = $order->getStatus();
+        $state = $order->getState();
+
+        if ($state) {
+            $stateObject->setState($state);
+        }
+
+        if ($status) {
+            $stateObject->setStatus($status);
+        }
+
+        $stateObject->setIsNotified(false);
     }
+
+
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
@@ -206,7 +221,6 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
 
-        //@NOTE: BUG - a seguinte função não está atualizando o status do pedido no magento.
         $this->processPaymentOrder($order, $status, $message);
 
         return $this;
@@ -275,6 +289,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
     }
 
     private function processPaymentOrder($order, $paymentStatus, $comment) {
+
         $status  = \Ipag\Payment\Helper\AbstractData::translatePaymentStatusToOrderStatus($paymentStatus);
 
         if (!$status)
