@@ -123,7 +123,6 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $total
     );
     abstract protected function execTransaction($provider, $providerPayload);
-    abstract protected function prepareTransactionResponse($response);
     abstract protected function execCapture($provider, $tid, $amount);
 
     public function setIpagHelper(\Ipag\Payment\Helper\AbstractData $ipagHelper)
@@ -229,7 +228,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $InfoInstance);
 
-        list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
+        list($status, $message) = $this->_ipagHelper->getStatusFromResponse($transactionResponse);
 
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
 
@@ -256,7 +255,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
             $captureResponse = $this->execCapture($provider, $tid, $captureAmount);
 
-            list($status,) = $this->prepareTransactionResponse($captureResponse);
+            list($status,) = $this->_ipagHelper->getStatusFromResponse($captureResponse);
 
             if ($status != '8') {
                 throw new \Magento\Framework\Exception\LocalizedException(__('Capture failed. Status: ' . $status));

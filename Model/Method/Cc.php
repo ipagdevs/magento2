@@ -79,13 +79,6 @@ class Cc extends AbstractCc
         return $json;
     }
 
-    protected function prepareTransactionResponse($response) {
-        $status = isset($response['payment']) && isset($response['payment']['status']) ? $response['payment']['status'] : null;
-        $message = isset($response['payment']) && isset($response['payment']['message']) ? $response['payment']['message'] : null;
-
-        return [$status, $message];
-    }
-
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         return parent::capture($payment, $amount);

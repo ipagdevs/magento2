@@ -90,12 +90,4 @@ class Pix extends AbstractPix
             throw new IpagPaymentCcException('Error executing Pix transaction', 0, $th);
         }
     }
-
-    protected function prepareTransactionResponse($response)
-    {
-        $status = isset($response['status']) && isset($response['status']['code']) ? $response['status']['code'] : null;
-        $message = isset($response['acquirer']) && isset($response['acquirer']['message']) ? $response['acquirer']['message'] : null;
-
-        return [$status, $message];
-    }
 }

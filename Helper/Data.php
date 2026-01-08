@@ -164,4 +164,12 @@ final class Data extends AbstractData
 
         return $payment;
     }
+
+    public function getStatusFromResponse($response)
+    {
+        $status = isset($response['payment']) && isset($response['payment']['status']) ? $response['payment']['status'] : null;
+        $message = isset($response['payment']) && isset($response['payment']['message']) ? $response['payment']['message'] : null;
+
+        return [$status, $message];
+    }
 }

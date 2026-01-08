@@ -113,6 +113,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         ];
     }
 
+    abstract public function getStatusFromResponse($response);
     abstract public function getSDKProviderClassName();
     abstract public function getSDKProviderPackageName();
 

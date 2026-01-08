@@ -105,7 +105,6 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
         $infoInstance
     );
     abstract protected function execTransaction($provider, $providerPayload);
-    abstract protected function prepareTransactionResponse($response);
 
     public function setIpagHelper(\Ipag\Payment\Helper\AbstractData $ipagHelper)
     {
@@ -184,7 +183,7 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
 
         $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $infoInstance);
 
-        list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
+        list($status, $message) = $this->_ipagHelper->getStatusFromResponse($transactionResponse);
 
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
 
