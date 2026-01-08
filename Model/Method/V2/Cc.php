@@ -5,6 +5,7 @@ namespace Ipag\Payment\Model\Method\V2;
 use Ipag\Payment\Model\Method\AbstractCc;
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Exception\IpagPaymentCcException;
+use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
 class Cc extends AbstractCc
 {
@@ -28,6 +29,16 @@ class Cc extends AbstractCc
     public function validate()
     {
         return parent::validate();
+    }
+
+    public function processPayment($payment)
+    {
+        return parent::processPayment($payment);
+    }
+
+    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
+    {
+        return parent::isAvailable($quote);
     }
 
     protected function prepareTransactionPayload(
@@ -74,16 +85,21 @@ class Cc extends AbstractCc
 
             $data = $responsePayment->getData();
 
-            $maskedResponseData = MaskUtils::applyMaskRecursive($data);
+            $translatedData = PaymentResponseMapper::translateToV1($data);
+
+            $maskedResponseData = MaskUtils::applyMaskRecursive($translatedData);
 
             $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
-            return $maskedResponseData['attributes'];
+            return $maskedResponseData;
 
         } catch (\Throwable $th) {
-            throw new IpagPaymentCcException('Error executing Cc transaction', 0, $th);
+            throw new IpagPaymentCcException("Error executing Cc transaction: " . $th->getMessage(), 0, $th);
         }
 
+    }
+
+    protected function execCapture($provider, $tid, $amount = null) {
     }
 
     protected function prepareTransactionResponse($response) {
@@ -91,18 +107,5 @@ class Cc extends AbstractCc
         $message = isset($response['acquirer']) && isset($response['acquirer']['message']) ? $response['acquirer']['message'] : null;
 
         return [$status, $message];
-    }
-
-    protected function execCapture($provider, $tid, $amount = null) {
-    }
-
-    public function processPayment($payment)
-    {
-        return parent::processPayment($payment);
-    }
-
-    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
-    {
-        return parent::isAvailable($quote);
     }
 }

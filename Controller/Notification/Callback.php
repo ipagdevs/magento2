@@ -2,8 +2,8 @@
 
 namespace Ipag\Payment\Controller\Notification;
 
-use Ipag\Classes\Services\CallbackService;
 use Ipag\Ipag;
+use Ipag\Classes\Services\CallbackService;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 
@@ -210,7 +210,7 @@ class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwa
 
                     $order->addStatusHistoryComment(
                         __(
-                            'iPag callback: Status: %1, Message: %2.',
+                            'iPag callback: status: %1, message: %2.',
                             $response->payment->status,
                             $response->payment->message
                         )

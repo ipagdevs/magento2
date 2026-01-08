@@ -76,14 +76,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Customer\Model\CustomerFactory $customerFactory,
         \Magento\Framework\Encryption\EncryptorInterface $encryptor
     ) {
-        if (!class_exists($this->getSDKProviderClassName())) {
-            throw new IpagPaymentException(
-                \sprintf('iPag SDK (%s) is not installed or autoloadable. Please run: composer require the SDK package.',
-                    $this->getSDKProviderClassName()
-                )
-            );
-        }
-
         $this->_scopeConfig = $scopeConfig;
         $this->_objectManager = $objectManager;
         $this->date = $date;
@@ -121,7 +113,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         ];
     }
 
-    abstract protected function getSDKProviderClassName();
+    abstract public function getSDKProviderClassName();
+    abstract public function getSDKProviderPackageName();
 
     public function getCustomerDataFromOrder($order) {
         $customerId = $order->getCustomerId();
@@ -775,5 +768,76 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $stateFound;
+    }
+
+    public function registerAdditionalInfoTransactionData($responseJson, $InfoInstance) {
+        $walker = function ($data, $prefix = '') use (&$walker, $InfoInstance) {
+            if (is_object($data)) {
+                $data = (array) $data;
+            }
+
+            if (is_array($data)) {
+                foreach ($data as $key => $value) {
+                    $name = $prefix === '' ? $key : $prefix . '.' . $key;
+                    if (is_array($value) || is_object($value)) {
+                        $walker($value, $name);
+                    } else {
+                        if ($value !== null && $value !== '') {
+                            $InfoInstance->setAdditionalInformation($name, $value);
+                        }
+                    }
+                }
+            } else {
+                if ($data !== null && $data !== '' && $prefix !== '') {
+                    $InfoInstance->setAdditionalInformation($prefix, $data);
+                }
+            }
+        };
+
+        $walker($responseJson);
+    }
+
+    public function getAdditionalInfoTransactionData($InfoInstance) {
+        $data = [];
+        $keys = $InfoInstance->getAdditionalInformationKeys();
+
+        foreach ($keys as $key) {
+            $data[$key] = $InfoInstance->getAdditionalInformation($key);
+        }
+
+        return $data;
+    }
+
+    public function registerOrderStatusHistory($order, $paymentStatus, $comment) {
+
+        $status  = \Ipag\Payment\Helper\AbstractData::translatePaymentStatusToOrderStatus($paymentStatus);
+
+        if (!$status)
+            $status = \Magento\Sales\Model\Order::STATE_NEW;
+
+        $state = \Ipag\Payment\Helper\AbstractData::getStateFromStatus($status);
+
+        $order->setStatus($status);
+
+        if ($state)
+            $order->setState($state);
+
+        $order->addStatusHistoryComment(
+            __('iPag response: status: %1, message: %2.', $status, $comment)
+        )->setIsCustomerNotified(false);
+
+        $order->save();
+    }
+
+    public function updateStateObject($stateObject, $status, $state) {
+        if ($state) {
+            $stateObject->setState($state);
+        }
+
+        if ($status) {
+            $stateObject->setStatus($status);
+        }
+
+        $stateObject->setIsNotified(false);
     }
 }

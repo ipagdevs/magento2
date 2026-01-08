@@ -13,9 +13,14 @@ final class Data extends AbstractData
         return $this->implementationVersion;
     }
 
-    protected function getSDKProviderClassName()
+    public function getSDKProviderClassName()
     {
         return '\Ipag\Sdk\Core\IpagClient';
+    }
+
+    public function getSDKProviderPackageName()
+    {
+        return 'ipagdevs/ipag-sdk-php';
     }
 
     // Add v2-specific helper overrides below as needed.
@@ -40,7 +45,7 @@ final class Data extends AbstractData
         $credentialsApiId = $this->getIdentification();
 
         if (empty($credentialsApiKey) || empty($credentialsApiId)) {
-            throw new IpagPaymentException('iPag SDK crendentials are not properly configured.');
+            throw new IpagPaymentException('iPag SDK credentials are not properly configured.');
         }
 
         return [ $credentialsApiKey, $credentialsApiId ];
@@ -107,53 +112,27 @@ final class Data extends AbstractData
             $billing_complemento
         ) = $customerOrder;
 
+        $addressModel = [
+            'city' => $city_billing,
+            'state' => $region_billing,
+            'street' => $billing_logradouro,
+            'district' => $billing_district,
+            "complement" => $billing_complemento,
+            'number' => preg_replace('/\D/', '', $billing_number),
+            'zipcode' => preg_replace('/\D/', '', $postcode_billing)
+        ];
+
         $customer = new \Ipag\Sdk\Model\Customer([
             'name' => $name,
             'email' => $email,
             'tax_id' => $taxvat,
-            'phone' => $ddd_telephone . $number_telephone,
-            'address' => [
-                'street' => $billing_logradouro,
-                'number' => $billing_number,
-                "complement" => $billing_complemento,
-                'district' => $billing_district,
-                'city' => $city_billing,
-                'state' => $region_billing,
-                'zipcode' => $postcode_billing
-            ]
+            'address' => $addressModel,
+            'billing_address' => $addressModel,
+            'shipping_address' => $addressModel,
+            'phone' => preg_replace('/\D/', '', $ddd_telephone . $number_telephone),
         ]);
 
         return $customer;
-    }
-
-    public function addPayCcIpag($ipag, $cardOrder)
-    {
-        list (
-            $nome,
-            $numero,
-            $cvv,
-            $mes,
-            $ano,
-            $bandeira,
-            $installments
-        ) = $cardOrder;
-
-        $payment = new \Ipag\Sdk\Model\Payment([
-            'type' => 'card',
-            'method' => $bandeira,
-            'fraud_analysis' => true,
-            'installments' => $installments,
-            'card' => [
-                'holder' => $nome,
-                'number' => $numero,
-                'expiry_month' => $mes,
-                'expiry_year' => $ano,
-                'brand' => $bandeira,
-                'cvv' => $cvv,
-            ]
-        ]);
-
-        return $payment;
     }
 
     public function createOrderIpag(
@@ -195,9 +174,49 @@ final class Data extends AbstractData
         return $paymentTransaction;
     }
 
+    public function addPayCcIpag($ipag, $cardOrder)
+    {
+        list (
+            $nome,
+            $numero,
+            $cvv,
+            $mes,
+            $ano,
+            $bandeira,
+            $installments
+        ) = $cardOrder;
+
+        $payment = new \Ipag\Sdk\Model\Payment([
+            'type' => 'card',
+            'method' => $bandeira,
+            'fraud_analysis' => true,
+            'installments' => $installments,
+            'card' => [
+                'holder' => $nome,
+                'number' => $numero,
+                'expiry_month' => $mes,
+                'expiry_year' => $ano,
+                'brand' => $bandeira,
+                'cvv' => $cvv,
+            ]
+        ]);
+
+        return $payment;
+    }
+
     public function addPayBoletoIpag($ipag, $InfoInstance)
-    {}
+    {
+
+    }
 
     public function addPayPixIpag($ipag, $InfoInstance)
-    {}
+    {
+        $payment = new \Ipag\Sdk\Model\Payment([
+            'type' => \Ipag\Sdk\Core\Enums\PaymentTypes::PIX,
+            'method' => \Ipag\Sdk\Core\Enums\Others::PIX,
+            'pix_expires_in' => 60
+        ]);
+
+        return $payment;
+    }
 }

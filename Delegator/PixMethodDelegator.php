@@ -2,52 +2,35 @@
 
 namespace Ipag\Payment\Delegator;
 
-class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
+class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
-
     protected $_canAuthorize = true;
-
-    protected $_canCapture = true;
-
-    protected $_canRefund = true;
-
-    protected $_code = 'ipagcc';
-
+    protected $_canCapture = false;
+    protected $_canRefund = false;
+    protected $_code = 'ipagpix';
     protected $_isGateway = true;
-
     protected $_canCapturePartial = false;
-
     protected $_canRefundInvoicePartial = false;
-
     protected $_canVoid = true;
-
     protected $_canCancel = true;
-
     protected $_canUseForMultishipping = false;
-
-    protected $_canFetchTransactionInfo = true;
-
     protected $_countryFactory;
-
     protected $_supportedCurrencyCodes = ['BRL'];
-
-    protected $_debugReplacePrivateDataKeys = ['number', 'exp_month', 'exp_year', 'cvc'];
-
     protected $_cart;
-
+    protected $_ipagHelper;
     protected $logger;
-
-    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Cc';
-
+    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Pix';
     protected $_isInitializeNeeded = true;
-
-    protected $_canUseInternal = false;
+    protected $_ipagInvoiceInstallments;
+    protected $_storeManager;
+    protected $_date;
+    protected $_canUseInternal = true;
     protected $_transaction;
     protected $_invoiceService;
     protected $orderManagement;
 
-    protected $ccFactory;
+    protected $pixFactory;
 
     protected $helperFactory;
 
@@ -58,7 +41,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
      * Constructor
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \Ipag\Payment\Factory\CcFactory $ccFactory
+     * @param \Ipag\Payment\Factory\PixFactory $pixFactory
      * @param \Ipag\Payment\Factory\HelperFactory $helperFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Locale\ResolverInterface $resolver
@@ -79,7 +62,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Framework\UrlInterface $urlBuilder,
-        \Ipag\Payment\Factory\CcFactory $ccFactory,
+        \Ipag\Payment\Factory\PixFactory $pixFactory,
         \Ipag\Payment\Factory\HelperFactory $helperFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Locale\ResolverInterface $resolver,
@@ -122,7 +105,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
         $this->_transaction = $transaction;
         $this->_invoiceService = $invoiceService;
         $this->orderManagement = $orderManagement;
-        $this->ccFactory = $ccFactory;
+        $this->pixFactory = $pixFactory;
         $this->helperFactory = $helperFactory;
 
         $this->__initializeDelegate();
@@ -133,7 +116,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
         try {
             return $this->delegate->validate();
         } catch (\Throwable $th) {
-            $this->logger->error('CC delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Pix delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -150,7 +133,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
             $this->delegate->setInfoInstance($this->getInfoInstance());
             return $this->delegate->initialize($paymentAction, $stateObject);
         } catch (\Throwable $th) {
-            $this->logger->error('CC delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Pix delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -167,14 +150,9 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
             $this->delegate->setInfoInstance($this->getInfoInstance());
             return $this->delegate->processPayment($payment);
         } catch (\Throwable $th) {
-            $this->logger->error('CC delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Pix delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed. Contact support.'));
         }
-    }
-
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        return $this->delegate->capture($payment, $amount);
     }
 
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
@@ -190,12 +168,11 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
 
         $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
-        $ccMethod = $this->ccFactory->createForVersion($version);
+        $pixMethod = $this->pixFactory->createForVersion($version);
 
         $helperData = $this->helperFactory->createForVersion($version);
 
-        $this->delegate = $ccMethod;
-
+        $this->delegate = $pixMethod;
         $this->delegate->setCart($this->_cart);
         $this->delegate->setIpagHelper($helperData);
         $this->delegate->setInvoiceService($this->_invoiceService);

@@ -5,9 +5,14 @@ namespace Ipag\Payment\Helper;
 final class Data extends AbstractData
 {
 
-    protected function getSDKProviderClassName()
+    public function getSDKProviderClassName()
     {
         return '\Ipag\Ipag';
+    }
+
+    public function getSDKProviderPackageName()
+    {
+        return 'jhernandes/ipag-sdk-php';
     }
 
     public function AuthorizationValidate()

@@ -4,7 +4,7 @@
         <payment>
             <ipagbase>
                 <title>Config Ipag</title>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>Ipag\Payment\Delegator\CardMethodDelegator</model>
                 <environment_mode>production</environment_mode>
                 <show_logo>1</show_logo>
                 <apiVersion>v2</apiVersion>
@@ -71,7 +71,7 @@
                 </installment>
             </ipagboleto>
             <ipagpix>
-                <model>Ipag\Payment\Model\Method\Pix</model>
+                <model>Ipag\Payment\Delegator\PixMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>

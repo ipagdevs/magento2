@@ -78,8 +78,8 @@ class Boleto extends \Magento\Payment\Block\Info
         if (!empty($_info->getAdditionalInformation('urlAuthentication'))) {
             $url = $_info->getAdditionalInformation('urlAuthentication');
         } else {
-            if (!empty($_info->getAdditionalInformation('attributes.links.payment'))) {
-                $url = $_info->getAdditionalInformation('attributes.links.payment');
+            if (!empty($_info->getAdditionalInformation('links.payment'))) {
+                $url = $_info->getAdditionalInformation('links.payment');
             }
         }
 

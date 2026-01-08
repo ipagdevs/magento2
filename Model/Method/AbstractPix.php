@@ -2,49 +2,32 @@
 
 namespace Ipag\Payment\Model\Method;
 
-abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
+use Ipag\Payment\Exception\IpagPaymentException;
+
+abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
-
     protected $_canAuthorize = true;
-
-    protected $_canCapture = true;
-
-    protected $_canRefund = true;
-
-    protected $_code = 'ipagcc';
-
+    protected $_canCapture = false;
+    protected $_canRefund = false;
+    protected $_code = 'ipagpix';
     protected $_isGateway = true;
-
     protected $_canCapturePartial = false;
-
     protected $_canRefundInvoicePartial = false;
-
     protected $_canVoid = true;
-
     protected $_canCancel = true;
-
     protected $_canUseForMultishipping = false;
-
-    protected $_canFetchTransactionInfo = true;
-
     protected $_countryFactory;
-
     protected $_supportedCurrencyCodes = ['BRL'];
-
-    protected $_debugReplacePrivateDataKeys = ['number', 'exp_month', 'exp_year', 'cvc'];
-
     protected $_cart;
-
     protected $_ipagHelper;
-
     protected $logger;
-
-    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Cc';
-
+    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Pix';
     protected $_isInitializeNeeded = true;
-
-    protected $_canUseInternal = false;
+    protected $_ipagInvoiceInstallments;
+    protected $_storeManager;
+    protected $_date;
+    protected $_canUseInternal = true;
 
     /**
      * Constructor
@@ -86,8 +69,8 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         \Magento\Framework\DB\TransactionFactory $transaction,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Api\OrderManagementInterface $orderManagement,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -114,17 +97,15 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
     abstract protected function prepareTransactionPayload(
         $provider,
-        $orderCard,
         $items,
         $fingerprint,
-        $installments,
         $deviceFingerprint,
         $order,
-        $total
+        $total,
+        $infoInstance
     );
     abstract protected function execTransaction($provider, $providerPayload);
     abstract protected function prepareTransactionResponse($response);
-    abstract protected function execCapture($provider, $tid, $amount);
 
     public function setIpagHelper(\Ipag\Payment\Helper\AbstractData $ipagHelper)
     {
@@ -146,7 +127,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $this->logger->loginfo([
             'state' => $state,
             'status' => $status,
-        ], self::class . ' iPag Cc update order #' . $order->getIncrementId() . ' state object.');
+        ], self::class . ' iPag Pix update order #' . $order->getIncrementId() . ' state object.');
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
@@ -154,14 +135,15 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         return '';
     }
 
-    public function assignData(\Magento\Framework\DataObject $data) {
+    public function assignData(\Magento\Framework\DataObject $data)
+    {
         parent::assignData($data);
 
         $infoInstance = $this->getInfoInstance();
         $currentData = $data->getAdditionalData();
         $additionalData = $data->getData(\Magento\Quote\Api\Data\PaymentInterface::KEY_ADDITIONAL_DATA);
 
-        if (!is_array($additionalData)) {
+        if (!\is_array($additionalData)) {
             return $this;
         }
 
@@ -181,92 +163,32 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         $provider = $this->preparePaymentProvider();
 
-        $InfoInstance = $this->getInfoInstance();
+        $infoInstance = $this->getInfoInstance();
         $items = $this->_cart->getQuote()->getAllItems();
-        $fingerprint = $InfoInstance->getAdditionalInformation('fingerprint');
-        $installments = $InfoInstance->getAdditionalInformation('installments');
-        $deviceFingerprint = $InfoInstance->getAdditionalInformation('device_fingerprint');
+        $fingerprint = $infoInstance->getAdditionalInformation('fingerprint');
+        $deviceFingerprint = $infoInstance->getAdditionalInformation('device_fingerprint');
 
-        $orderCard = $this->_ipagHelper->getCardDataFromInfoInstance($InfoInstance);
-        $additionalPrice = $this->_ipagHelper->addAdditionalPriceIpag($order, $installments);
-
-        $total = $order->getGrandTotal() + $additionalPrice;
+        $total = $order->getGrandTotal();
 
         $transactionPayload = $this->prepareTransactionPayload(
             $provider,
-            $orderCard,
             $items,
             $fingerprint,
-            $installments,
             $deviceFingerprint,
             $order,
-            $total
+            $total,
+            $infoInstance
         );
-
-        $order->setTaxAmount($additionalPrice);
-        $order->setBaseTaxAmount($additionalPrice);
-        $order->setGrandTotal($total);
-        $order->setBaseGrandTotal($total);
-
-        if ($additionalPrice >= 0.01) {
-            $brl = 'R$';
-            $formatted = number_format($additionalPrice, '2', ',', '.');
-            $totalformatted = number_format($total, '2', ',', '.');
-            $InfoInstance->setAdditionalInformation('interest', $brl . $formatted);
-            $InfoInstance->setAdditionalInformation('total_with_interest', $brl . $totalformatted);
-        }
-
-        $quoteInstance = $this->_cart->getQuote()->getPayment();
-        $numero = $InfoInstance->getAdditionalInformation('cc_number');
-        $cvv = $InfoInstance->getAdditionalInformation('cc_cid');
-        $quoteInstance->setAdditionalInformation(
-            'cc_number',
-            preg_replace('/^(\d{6})(\d+)(\d{4})$/', '$1******$3', $numero)
-        );
-        $quoteInstance->setAdditionalInformation('cc_cid', preg_replace('/\d/', '*', $cvv));
 
         $transactionResponse = $this->execTransaction($provider, $transactionPayload);
 
-        $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $InfoInstance);
+        $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $infoInstance);
 
         list($status, $message) = $this->prepareTransactionResponse($transactionResponse);
 
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
 
         return $this;
-    }
-
-    public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        try {
-            $order = $payment->getOrder();
-            $provider = $this->preparePaymentProvider();
-
-            $tid = $payment->getAdditionalInformation('tid');
-            $status = $payment->getAdditionalInformation('payment.status');
-            $captureAmount = ($amount > 0 && $amount != $order->getGrandTotal()) ? $amount : null;
-
-            if (empty($tid)) {
-                throw new \Magento\Framework\Exception\LocalizedException(__('TID not found.'));
-            }
-
-            if ($status != '5') {
-                throw new \Magento\Framework\Exception\LocalizedException(__('Payment not approved.'));
-            }
-
-            $captureResponse = $this->execCapture($provider, $tid, $captureAmount);
-
-            list($status,) = $this->prepareTransactionResponse($captureResponse);
-
-            if ($status != '8') {
-                throw new \Magento\Framework\Exception\LocalizedException(__('Capture failed. Status: ' . $status));
-            }
-
-            return $this;
-
-        } catch (\Throwable $th) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('Capture Online Error: ' . $th->getMessage()));
-        }
     }
 
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
@@ -283,7 +205,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
             $this->validate();
         } catch (\Throwable $th) {
-            $this->logger->error('Cc error: ' . $th->getMessage());
+            $this->logger->error('Pix error: ' . $th->getMessage());
             return false;
         }
 
@@ -291,10 +213,12 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         return $selfActive;
     }
 
-    public function validate() {
+    public function validate()
+    {
         return $this->_ipagHelper->AuthorizationValidate();
     }
 
+    /** */
     private function preparePaymentProvider()
     {
         return $this->validate();
