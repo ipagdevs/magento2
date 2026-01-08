@@ -2,13 +2,13 @@
 
 namespace Ipag\Payment\Delegator;
 
-class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
+class BoletoMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
     protected $_canAuthorize = true;
     protected $_canCapture = false;
     protected $_canRefund = false;
-    protected $_code = 'ipagpix';
+    protected $_code = 'ipagboleto';
     protected $_isGateway = true;
     protected $_canCapturePartial = false;
     protected $_canRefundInvoicePartial = false;
@@ -20,7 +20,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
     protected $_cart;
     protected $_ipagHelper;
     protected $logger;
-    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Pix';
+    protected $_infoBlockType = 'Ipag\Payment\Block\Info\Boleto';
     protected $_isInitializeNeeded = true;
     protected $_ipagInvoiceInstallments;
     protected $_storeManager;
@@ -29,7 +29,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
     protected $_transaction;
     protected $_invoiceService;
     protected $orderManagement;
-    protected $pixFactory;
+    protected $boletoFactory;
     protected $helperFactory;
     protected $delegate = null;
     protected $scopeConfig;
@@ -38,7 +38,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
      * Constructor
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \Ipag\Payment\Factory\PixFactory $pixFactory
+     * @param \Ipag\Payment\Factory\BoletoFactory $boletoFactory
      * @param \Ipag\Payment\Factory\HelperFactory $helperFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Locale\ResolverInterface $resolver
@@ -59,7 +59,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Framework\UrlInterface $urlBuilder,
-        \Ipag\Payment\Factory\PixFactory $pixFactory,
+        \Ipag\Payment\Factory\BoletoFactory $boletoFactory,
         \Ipag\Payment\Factory\HelperFactory $helperFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Locale\ResolverInterface $resolver,
@@ -78,8 +78,8 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
         \Magento\Framework\DB\TransactionFactory $transaction,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Api\OrderManagementInterface $orderManagement,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -102,7 +102,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
         $this->_transaction = $transaction;
         $this->_invoiceService = $invoiceService;
         $this->orderManagement = $orderManagement;
-        $this->pixFactory = $pixFactory;
+        $this->boletoFactory = $boletoFactory;
         $this->helperFactory = $helperFactory;
 
         $this->__initializeDelegate();
@@ -113,7 +113,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
         try {
             return $this->delegate->validate();
         } catch (\Throwable $th) {
-            $this->logger->error('Pix delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Boleto delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -130,7 +130,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
             $this->delegate->setInfoInstance($this->getInfoInstance());
             return $this->delegate->initialize($paymentAction, $stateObject);
         } catch (\Throwable $th) {
-            $this->logger->error('Pix delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Boleto delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -147,7 +147,7 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
             $this->delegate->setInfoInstance($this->getInfoInstance());
             return $this->delegate->processPayment($payment);
         } catch (\Throwable $th) {
-            $this->logger->error('Pix delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            $this->logger->error('Boleto delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed. Contact support.'));
         }
     }
@@ -165,11 +165,11 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
 
         $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
-        $pixMethod = $this->pixFactory->createForVersion($version);
+        $boletoMethod = $this->boletoFactory->createForVersion($version);
 
         $helperData = $this->helperFactory->createForVersion($version);
 
-        $this->delegate = $pixMethod;
+        $this->delegate = $boletoMethod;
         $this->delegate->setCart($this->_cart);
         $this->delegate->setIpagHelper($helperData);
         $this->delegate->setInvoiceService($this->_invoiceService);

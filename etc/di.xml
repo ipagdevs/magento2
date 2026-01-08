@@ -32,5 +32,11 @@
             <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\PixFactory</argument>
         </arguments>
     </type>
+    <type name="Ipag\Payment\Factory\BoletoFactory">
+        <arguments>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Model\Method\V2\BoletoFactory</argument>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\BoletoFactory</argument>
+        </arguments>
+    </type>
     <!-- Note: helper provider is injected into the switcher; individual method classes do not require it here -->
 </config>

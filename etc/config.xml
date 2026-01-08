@@ -55,7 +55,7 @@
                 <mp_token></mp_token>
             </ipagcc>
             <ipagboleto>
-                <model>Ipag\Payment\Model\Method\Boleto</model>
+                <model>Ipag\Payment\Delegator\BoletoMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>

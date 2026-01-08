@@ -118,132 +118,31 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     abstract public function getSDKProviderPackageName();
 
     public function getCustomerDataFromOrder($order) {
-        $customerId = $order->getCustomerId();
-        $customerData = !empty($customerId) ? $this->customerFactory->create()->load($customerId)->toArray() : [];
-
+        // Nome do cliente
         if (!$order->getCustomerFirstname()) {
-            $name = $order->getBillingAddress()->getName();
+            $name = $order->getBillingAddress() ? $order->getBillingAddress()->getName() : '';
         } else {
             $name = $order->getCustomerFirstname() . ' ' . $order->getCustomerLastname();
         }
 
-        $type_cpf = $this->getTypeForCpf();
-
-        if ($type_cpf === "customer") {
-            $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
-            $_taxvat = $order->getData('customer_' . $attribute_cpf_customer);
-            if (empty($_taxvat) && !empty($customerData)) {
-                if (array_key_exists($attribute_cpf_customer, $customerData)) {
-                    $_taxvat = $customerData[$attribute_cpf_customer];
-                }
-            }
-        } else {
-            $attribute_cpf_address = $this->getCpfAttributeForAddress();
-            $_taxvat = $order->getBillingAddress()->getData($attribute_cpf_address);
-        }
-
-        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
-
-        $type_cnpj = $this->getTypeForCNPJ();
-
-        if ($type_cnpj === "use_cpf") {
-
-            if (strlen($taxvat) > 11) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            } else {
-                $_typedocument = "CPF";
-            }
-        } elseif ($type_cnpj === "use_customer") {
-            $attribute_cnpj = $this->getCNPJAttributeForCustomer();
-            $_taxvat = $order->getData('customer_' . $attribute_cnpj);
-            if (empty($_taxvat) && !empty($customerData)) {
-                if (array_key_exists($attribute_cnpj, $customerData)) {
-                    $_taxvat = $customerData[$attribute_cnpj];
-                }
-            }
-            if ($_taxvat) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            }
-        } elseif ($type_cnpj === "use_address") {
-            $attribute_cnpj_address = $this->getCNPJAttributeForAddress();
-            $_taxvat = $order->getBillingAddress()->getData($attribute_cnpj_address);
-            if ($_taxvat) {
-                $_typedocument = "CNPJ";
-                $type_name_company = $this->getTypeNameCompany();
-                if ($type_name_company === "customer") {
-                    $attribute_name = $this->getCompanyAttributeForCustomer();
-                    $name = $order->getData('customer_' . $attribute_name);
-                    if (empty($name) && !empty($customerData)) {
-                        if (array_key_exists($attribute_name, $customerData)) {
-                            $name = $customerData[$attribute_name];
-                        }
-                    }
-                } else {
-                    $attribute_name = $this->getCompanyAttributeForAddress();
-                    $name = $order->getBillingAddress()->getData($attribute_name);
-                }
-            }
-        }
-
-        $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
+        $taxvat = $this->getTaxvatFromOrder($order);
 
         $email = $order->getCustomerEmail();
 
-        $ddd_telephone = $this->getNumberOrDDD($order->getBillingAddress()->getTelephone(), true);
-        $number_telephone = $this->getNumberOrDDD($order->getBillingAddress()->getTelephone(), false);
+        $billingAddress = $order->getBillingAddress();
 
-        $street_billing = $order->getBillingAddress()->getStreet();
+        $ddd_telephone = $billingAddress ? $this->getNumberOrDDD($billingAddress->getTelephone(), true) : '';
+        $number_telephone = $billingAddress ? $this->getNumberOrDDD($billingAddress->getTelephone(), false) : '';
 
-        $city_billing = $order->getBillingAddress()->getData('city');
+        $street_billing = $billingAddress ? $billingAddress->getStreet() : [];
+        $city_billing = $billingAddress ? $billingAddress->getData('city') : '';
+        $region_billing = $billingAddress ? $billingAddress->getRegionCode() : '';
+        $postcode_billing = $billingAddress ? substr(preg_replace('/[^0-9]/', '', (string) $billingAddress->getData('postcode')) . '00000000', 0, 8) : '';
 
-        $region_billing = $order->getBillingAddress()->getRegionCode();
-
-        $postcode_billing = substr(preg_replace("/[^0-9]/", "", (string) $order->getBillingAddress()->getData('postcode')) . '00000000', 0, 8);
-
-        $billing_logradouro = $street_billing[$this->getStreetPositionLogradouro()];
-
-        $billing_number =
-            array_key_exists($this->getStreetPositionNumber(), $street_billing) ?
-                $street_billing[$this->getStreetPositionNumber()] : '';
-
-        if (count($street_billing) >= 3 && array_key_exists($this->getStreetPositionDistrict(), $street_billing)) {
-            $billing_district = $street_billing[$this->getStreetPositionDistrict()];
-        } else {
-            $billing_district = $street_billing[$this->getStreetPositionLogradouro()];
-        }
-
-        if (count($street_billing) == 4) {
-            $billing_complemento = $street_billing[$this->getStreetPositionComplemento()];
-        } else {
-            $billing_complemento = "";
-        }
+        $billing_logradouro = isset($street_billing[$this->getStreetPositionLogradouro()]) ? $street_billing[$this->getStreetPositionLogradouro()] : (isset($street_billing[0]) ? $street_billing[0] : '');
+        $billing_number = isset($street_billing[$this->getStreetPositionNumber()]) ? $street_billing[$this->getStreetPositionNumber()] : '';
+        $billing_district = isset($street_billing[$this->getStreetPositionDistrict()]) ? $street_billing[$this->getStreetPositionDistrict()] : $billing_logradouro;
+        $billing_complemento = isset($street_billing[$this->getStreetPositionComplemento()]) ? $street_billing[$this->getStreetPositionComplemento()] : '';
 
         return [
             $name,
@@ -259,6 +158,88 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             $postcode_billing,
             $billing_complemento
         ];
+    }
+
+    /**
+     * Tenta obter o CPF/CNPJ (somente dígitos) relacionado a um pedido.
+     * Ordem de tentativa: customer attribute -> order data -> billing address (vat_id ou atributos configurados).
+     * Retorna string vazia se não encontrar.
+     *
+     * @param \Magento\Sales\Model\Order $order
+     * @return string
+     */
+    public function getTaxvatFromOrder($order)
+    {
+        $taxvat = '';
+
+        // 1) Tenta carregar do customer (se existir customerId)
+        $customerId = $order->getCustomerId();
+        if (!empty($customerId)) {
+            try {
+                $customer = $this->customerFactory->create()->load($customerId);
+                if ($customer) {
+                    $value = $customer->getData('taxvat');
+                    if (empty($value) && method_exists($customer, 'getCustomAttribute')) {
+                        $attr = $customer->getCustomAttribute('taxvat');
+                        $value = $attr ? $attr->getValue() : $value;
+                    }
+                    if (!empty($value)) {
+                        $taxvat = $value;
+                    }
+                }
+            } catch (\Exception $e) {
+                // ignore e continue com outros fallback
+            }
+        }
+
+        // 2) Tenta dados do order (customer_taxvat)
+        if (empty($taxvat)) {
+            $maybe = $order->getData('customer_taxvat');
+            if (!empty($maybe)) {
+                $taxvat = $maybe;
+            }
+        }
+
+        // 3) Tenta endereço de cobrança
+        $billing = $order->getBillingAddress();
+        if ($billing && empty($taxvat)) {
+            $maybe = '';
+            if (method_exists($billing, 'getVatId')) {
+                $maybe = $billing->getVatId();
+            }
+            if (empty($maybe)) {
+                $maybe = $billing->getData('vat_id');
+            }
+
+            if (!empty($maybe)) {
+                $taxvat = $maybe;
+            }
+
+            // tentar atributos configurados (cpf/cnpj em address)
+            if (empty($taxvat)) {
+                $attrCpf = $this->getCpfAttributeForAddress();
+                if (!empty($attrCpf)) {
+                    $maybe = $billing->getData($attrCpf);
+                    if (!empty($maybe)) {
+                        $taxvat = $maybe;
+                    }
+                }
+            }
+            if (empty($taxvat)) {
+                $attrCnpj = $this->getCNPJAttributeForAddress();
+                if (!empty($attrCnpj)) {
+                    $maybe = $billing->getData($attrCnpj);
+                    if (!empty($maybe)) {
+                        $taxvat = $maybe;
+                    }
+                }
+            }
+        }
+
+        // 4) sanitiza e retorna apenas números
+        $taxvat = preg_replace('/[^0-9]/', '', (string) $taxvat);
+
+        return $taxvat;
     }
 
     abstract public function AuthorizationValidate();

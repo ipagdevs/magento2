@@ -1,7 +1,11 @@
 <?php if($block->getMethodCode() === "ipagboleto"):
+
 $url = "";
+$digitableLine = "";
+
 if (!empty($block->getInfo('urlAuthentication'))) {
     $url = $block->getInfo('urlAuthentication');
+	$digitableLine = $block->getInfo('digitableLine');
 }
 else {
     if (!empty($block->getInfo('links.payment'))) {
@@ -13,6 +17,15 @@ else {
 		<a href="<?php echo $url; ?>" target="_blank" class="action primary btn-boleto boleto-ipag">
 			<span><?php echo __('Imprimir Boleto') ?></span>
 		</a>
+
+		<?php if (!empty($digitableLine)) : ?>
+			<button type="button" id="button-copy" class="action primary btn-boleto boleto-ipag"
+				data-digitableLine="<?php echo $digitableLine; ?>"
+				onclick="window.navigator.clipboard.writeText(this.getAttribute('data-digitableLine')) && alert('Código de barras copiado para a área de transferência');"
+			>
+				<span>Copiar código de barras</span>
+			</button>
+		<?php endif; ?>
 	</p>
 <?php endif; ?>
 <?php if($block->getMethodCode() === "ipagpix") :

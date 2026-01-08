@@ -43,6 +43,8 @@ class Pix extends AbstractPix
 
     protected function prepareTransactionPayload($provider, $items, $fingerprint, $deviceFingerprint, $order, $total, $infoInstance)
     {
+        $installments = 1;
+
         $customerOrder = $this->_ipagHelper->getCustomerDataFromOrder($order);
 
         $transactionProducts = $this->_ipagHelper->addProductItemsIpag($provider, $items);
@@ -50,8 +52,6 @@ class Pix extends AbstractPix
         $transactionCustomer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
 
         $transactionPayment = $this->_ipagHelper->addPayPixIpag($provider, $infoInstance);
-
-        $installments = 1;
 
         $transactionOrder = $this->_ipagHelper->createOrderIpag(
             $order,

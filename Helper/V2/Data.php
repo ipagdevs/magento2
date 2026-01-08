@@ -2,6 +2,7 @@
 
 namespace Ipag\Payment\Helper\V2;
 
+use Kubinyete\Assertation\Assert;
 use Ipag\Payment\Helper\AbstractData;
 use Ipag\Payment\Exception\IpagPaymentException;
 
@@ -112,6 +113,8 @@ final class Data extends AbstractData
             $billing_complemento
         ) = $customerOrder;
 
+        $cpfCnpj = Assert::value($taxvat)->asCpf(false)->or()->asCnpj(false)->get() ?: null;
+
         $addressModel = [
             'city' => $city_billing,
             'state' => $region_billing,
@@ -122,15 +125,22 @@ final class Data extends AbstractData
             'zipcode' => preg_replace('/\D/', '', $postcode_billing)
         ];
 
-        $customer = new \Ipag\Sdk\Model\Customer([
+        $defaultCustomerData = [
             'name' => $name,
             'email' => $email,
-            'tax_id' => $taxvat,
             'address' => $addressModel,
             'billing_address' => $addressModel,
             'shipping_address' => $addressModel,
             'phone' => preg_replace('/\D/', '', $ddd_telephone . $number_telephone),
-        ]);
+        ];
+
+        if (!empty($cpfCnpj)) {
+            $defaultCustomerData['cpf_cnpj'] = $cpfCnpj;
+        } else {
+            $defaultCustomerData['tax_id'] = $taxvat;
+        }
+
+        $customer = new \Ipag\Sdk\Model\Customer($defaultCustomerData);
 
         return $customer;
     }
@@ -206,7 +216,19 @@ final class Data extends AbstractData
 
     public function addPayBoletoIpag($ipag, $InfoInstance)
     {
+        $dueNumber = (int) $this->getDueNumber();
+        $instructionLines = $this->getInstructionLines('');
 
+        $payment = new \Ipag\Sdk\Model\Payment([
+            "type" => \Ipag\Sdk\Core\Enums\PaymentTypes::BOLETO,
+            "method" => \Ipag\Sdk\Core\Enums\BankSlips::SIMULADO,
+            "boleto" => [
+                "due_date" => $this->date->gmtDate('Y-m-d', strtotime("+{$dueNumber} days")),
+                "instructions" => [$instructionLines]
+            ]
+        ]);
+
+        return $payment;
     }
 
     public function addPayPixIpag($ipag, $InfoInstance)
