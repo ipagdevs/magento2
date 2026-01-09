@@ -49,7 +49,7 @@ final class Data extends AbstractData
             throw new IpagPaymentException('iPag SDK credentials are not properly configured.');
         }
 
-        return [ $credentialsApiKey, $credentialsApiId ];
+        return [$credentialsApiKey, $credentialsApiId];
     }
 
     private function prepareSDKEnvironment($environmentMode)
@@ -98,7 +98,7 @@ final class Data extends AbstractData
 
     public function generateCustomerIpag($ipag, $customerOrder)
     {
-        list (
+        list(
             $name,
             $taxvat,
             $email,
@@ -175,7 +175,8 @@ final class Data extends AbstractData
         );
 
         if (!empty($fingerprint)) {
-            $paymentTransaction->setAntifraud(new \Ipag\Sdk\Model\PaymentAntifraud([
+            $paymentTransaction->setAntifraud(
+                new \Ipag\Sdk\Model\PaymentAntifraud([
                     'fingerprint' => $deviceFingerprint,
                 ])
             );
@@ -186,7 +187,7 @@ final class Data extends AbstractData
 
     public function addPayCcIpag($ipag, $cardOrder)
     {
-        list (
+        list(
             $nome,
             $numero,
             $cvv,
@@ -216,15 +217,16 @@ final class Data extends AbstractData
 
     public function addPayBoletoIpag($ipag, $InfoInstance)
     {
+        $method = $this->getBoletoMethod();
         $dueNumber = (int) $this->getDueNumber();
-        $instructionLines = $this->getInstructionLines('');
+        $boletoInstruction = $this->getInstructionLines('');
 
         $payment = new \Ipag\Sdk\Model\Payment([
             "type" => \Ipag\Sdk\Core\Enums\PaymentTypes::BOLETO,
-            "method" => \Ipag\Sdk\Core\Enums\BankSlips::SIMULADO,
+            'method' => $method,
             "boleto" => [
                 "due_date" => $this->date->gmtDate('Y-m-d', strtotime("+{$dueNumber} days")),
-                "instructions" => [$instructionLines]
+                "instructions" => [$boletoInstruction],
             ]
         ]);
 

@@ -556,7 +556,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getInstructionLines($line)
     {
-        $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/instrucao' . $line, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/instruction' . $line, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         return $instrucao1;
     }

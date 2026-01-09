@@ -31,7 +31,7 @@ final class Data extends AbstractData
 
     public function generateCustomerIpag($ipag, $customerOrder)
     {
-        list (
+        list(
             $name,
             $taxvat,
             $email,
@@ -120,9 +120,7 @@ final class Data extends AbstractData
     public function addPayBoletoIpag($ipag, $InfoInstance)
     {
         $method = $this->getBoletoMethod();
-
-        $payment = $ipag->payment()
-            ->setMethod($method);
+        $payment = $ipag->payment()->setMethod($method);
 
         return $payment;
     }
@@ -137,7 +135,7 @@ final class Data extends AbstractData
 
     public function addPayCcIpag($ipag, $cardOrder)
     {
-        list (
+        list(
             $nome,
             $numero,
             $cvv,

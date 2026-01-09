@@ -160,33 +160,6 @@
                     <label>Payment From Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                 </field>
-                <group id="installment" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Configurações de parcelamento e juros</label>
-                    <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Habilitar parcelamento do boleto</label>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    </field>
-                    <field id="type_interest" translate="label" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Tipo de Juros</label>
-                        <source_model>Ipag\Payment\Block\Adminhtml\System\Config\TypeInterest</source_model>
-                    </field>
-                    <field id="min_installment" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Valor mínimo de cada parcela</label>
-                        <validate>required-entry validate-number</validate>
-                    </field>
-                    <field id="max_installment" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Número Máximo de Parcelas</label>
-                        <validate>required-entry validate-number</validate>
-                    </field>
-                    <field id="interest_free" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Parcelas sem Juros</label>
-                        <validate>required-entry validate-number</validate>
-                    </field>
-                    <field id="interest" translate="label" type="text" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Taxa de Juros (%)</label>
-                        <validate>required-entry validate-number</validate>
-                    </field>
-                </group>
             </group>
             <group id="ipagcc" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Ipag - Cartão de Crédito</label>
