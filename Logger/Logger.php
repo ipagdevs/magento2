@@ -7,9 +7,15 @@ use Monolog\Handler\StreamHandler;
 
 class Logger extends Monologger
 {
-    public function __construct()
+    private const FILENAME = 'ipag-logs.log';
+    private const LOG_DIR = '/var/log/ipag/';
+
+    public function __construct($filename = '', $logDir = '')
     {
-        $handler = new StreamHandler(BP . '/var/log/ipag/ipag-' . date('Y-m-d') . '.log', Monologger::INFO);
+        $logDir = $logDir ?: self::LOG_DIR;
+        $filename = $filename ?: self::FILENAME;
+        $handler = new StreamHandler(BP . $logDir . $filename, Monologger::INFO);
+
         parent::__construct('ipag', [$handler]);
     }
 
@@ -75,15 +81,12 @@ class Logger extends Monologger
     protected function array_filter_recursive($input)
     {
         if (!is_array($input)) {
-            return;
+            return $input;
         }
-        foreach ($input as &$value) {
+        foreach ($input as $key => $value) {
             if (is_array($value)) {
-                $value = self::array_filter_recursive($value);
+                $input[$key] = self::array_filter_recursive($value);
             }
-        }
-        if (is_string($input)) {
-            return array_filter($input, 'strlen');
         }
         return array_filter($input);
     }

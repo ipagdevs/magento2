@@ -2,8 +2,6 @@
 
 namespace Ipag\Payment\Model\Support;
 
-use stdClass;
-
 abstract class PaymentResponseMapper
 {
     public static function translateToV1($response)

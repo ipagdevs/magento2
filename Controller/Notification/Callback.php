@@ -2,226 +2,143 @@
 
 namespace Ipag\Payment\Controller\Notification;
 
-use Ipag\Ipag;
-use Ipag\Classes\Services\CallbackService;
+use Ipag\Payment\Model\Support\ArrUtils;
+use Ipag\Payment\Model\Support\SerializerUtils;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
 
-//use Magento\Framework\App\RequestInterface;
-//use Magento\Framework\App\Request\InvalidRequestException;
-//use Magento\Framework\App\CsrfAwareActionInterface;
-
-class Callback extends \Magento\Framework\App\Action\Action //implements CsrfAwareActionInterface
+class Callback extends Action implements CsrfAwareActionInterface
 {
-    protected $_logger;
-
-    protected $_ipagHelper;
-
-    protected $_ipagBoletoModel;
-
-    protected $_ipagInvoiceInstallments;
-
-    protected $_invoiceService;
-
-    protected $order;
-
-    protected $orderManagement;
-
-    protected $orderRepository;
-
-    protected $scopeConfig;
-
-    protected $ipagOrderStatus;
-
-    protected $invoiceSender;
-
-    protected $productMetadata;
-
-    protected $transactionFactory;
-
-    protected $ipagLogger;
+    private \Ipag\Payment\Logger\Logger $logger;
+    private $invoiceService;
+    private $order;
+    private OrderManagementInterface $orderManagement;
+    private OrderRepositoryInterface $orderRepository;
+    private $scopeConfig;
+    private $invoiceSender;
+    private $productMetadata;
+    private $transactionFactory;
+    private $helperFactory;
+    private $ipagHelper;
+    private $logPrefix = '';
 
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Psr\Log\LoggerInterface $logger,
+        Context $context,
         \Magento\Sales\Api\Data\OrderInterface $order,
         OrderManagementInterface $orderManagement,
         OrderRepositoryInterface $orderRepository,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Ipag\Payment\Model\Source\OrderStatus $ipagOrderStatus,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Ipag\Payment\Helper\Data $ipagHelper,
-        \Ipag\Payment\Logger\Logger $ipagLogger,
-        \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
-        \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments,
+        \Ipag\Payment\Factory\HelperFactory $helperFactory,
         \Magento\Framework\DB\TransactionFactory $transactionFactory
-
     ) {
-        $this->_invoiceService = $invoiceService;
-        $this->_logger = $logger;
-        $this->order = $order;
-        $this->orderManagement = $orderManagement;
-        $this->orderRepository = $orderRepository;
-        $this->scopeConfig = $scopeConfig;
-        $this->ipagOrderStatus = $ipagOrderStatus;
-        $this->invoiceSender = $invoiceSender;
-        $this->_ipagHelper = $ipagHelper;
-        $this->_ipagBoletoModel = $ipagBoletoModel;
-        $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
-        $this->productMetadata = $productMetadata;
-        $this->transactionFactory = $transactionFactory;
-        $this->ipagLogger = $ipagLogger;
-
         parent::__construct($context);
 
-        //compatibilidade com Magento 2.3
-        //o certo seria implementar a interface CsrfAwareActionInterface, mas isso quebra a retrocompatibilidade com Magento < 2.2 e PHP < 7.1
-        $version = $this->productMetadata->getVersion();
-        if (version_compare($version, '2.3.0') >= 0) {
-            $this->execute();
-            die();
+        $this->logPrefix = uniqid('callback_');
+
+        $this->order = $order;
+        $this->scopeConfig = $scopeConfig;
+        $this->invoiceSender = $invoiceSender;
+        $this->helperFactory = $helperFactory;
+        $this->invoiceService = $invoiceService;
+        $this->orderManagement = $orderManagement;
+        $this->orderRepository = $orderRepository;
+        $this->productMetadata = $productMetadata;
+        $this->transactionFactory = $transactionFactory;
+        $this->logger = new \Ipag\Payment\Logger\Logger('ipag-callbacks.log');
+
+        $this->_initializeModule();
+    }
+
+    public function execute()
+    {
+        $this->log('info', 'execute start');
+
+        try {
+
+            $identifier = $this->getIdentifierRequestParam();
+
+            if (!$identifier)
+                throw new \Exception('No identifier found in request.');
+
+            //@NOTE: ver o chat: adicionar campo vat no checkout...
+
+            //TODO: Process the response as needed
+            // $this->callbackService->handleCallback($raw);
+
+            //  $this->getResponse()->setStatusCode(200)->setBody('OK');
+
+        } catch (\Exception $e) {
+            $this->log(
+                'error',
+                'exception: ' . $e->getMessage(),
+                ['exception' => strval($e)]
+            );
+            // $this->getResponse()->setStatusCode(500)->setBody('Internal error');
         }
     }
 
-    /*public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    private function getIdentifierRequestParam()
     {
-    return null;
+        $tid = $this->getRequest()->getParam('id_transacao');
+
+        if ($tid)
+            return compact('tid');
+
+        $requestPayload = $this->parseRequest();
+
+        $id = ArrUtils::get($requestPayload, 'id');
+
+        return $id ? compact('id') : null;
+    }
+
+    /**
+     * Parse request payload and return decoded object.
+     */
+    private function parseRequest()
+    {
+        $raw = file_get_contents('php://input');
+
+        $serializer = SerializerUtils::getSuitableSerializer($raw);
+
+        if ($serializer === null)
+            throw new \Exception('No suitable serializer found for request payload.');
+
+        $requestParsed = $serializer->deserialize($raw);
+
+        if (empty($requestParsed))
+            throw new \Exception('Failed to parse request payload.');
+
+        $this->log('info', 'Parsed request payload', $requestParsed);
+
+        return $requestParsed;
+    }
+
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
     }
 
     public function validateForCsrf(RequestInterface $request): ?bool
     {
-    return true;
-    }*/
+        return true;
+    }
 
-    public function execute()
+    private function _initializeModule()
     {
-        $this->_logger->debug("entrou na capture");
-        $ipag = $this->_ipagHelper->AuthorizationValidate();
+        $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $this->ipagHelper = $this->helperFactory->createForVersion($version);
+    }
 
-        if (array_key_exists('id_transacao', $_REQUEST)) {
-            $tid = $_REQUEST['id_transacao'];
-            $response = $ipag->transaction()->setTid($tid)->consult();
-        } else {
-            $response = file_get_contents('php://input');
-            $callbackService = new CallbackService();
-            $response = $callbackService->getResponse($response);
-        }
-
-        // $response conterá os dados de retorno do iPag
-        // $postContent deverá conter o XML enviado pelo iPag
-
-        // Verificar se o retorno tem erro
-        if (!empty($response->error)) {
-            echo "Contem erro! {$response->error} - {$response->errorMessage}";
-        }
-
-        try {
-
-            $order_id = $response->order->orderId;
-            if ($order_id) {
-                $this->_logger->info(print_r($response, true));
-                $order = $this->order->loadByIncrementId($order_id);
-
-                $parcelas = $this->_ipagInvoiceInstallments->select(['order_id' => $order_id]);
-                if ($parcelas) {
-                    $parcela = array_shift($parcelas);
-                    $ipag_id = $parcela['ipag_invoice_id'];
-                    $response = $this->_ipagBoletoModel->queryInvoice($ipag_id);
-                    $json = json_decode($response, false);
-                    $response = $json->attributes->installments->data;
-                    $response = json_decode(json_encode($response), true);
-
-                    $this->_ipagInvoiceInstallments->import($response, $order_id, $ipag_id);
-                } else {
-                    // Verificar se a transação foi aprovada e capturada:
-                    if ($response->payment->status == '8') {
-                        if (!$order->hasInvoices()) {
-                            $invoice = $this->_invoiceService->prepareInvoice($order);
-                            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
-                            $invoice->register();
-                            $invoice->pay();
-
-                            $invoice->getOrder()->setCustomerNoteNotify(false);
-                            $invoice->getOrder()->setIsInProcess(true);
-                            $invoice->save();
-                            $order->addStatusHistoryComment('Automatically INVOICED', false);
-                            $order->setTotalPaid($response->amount);
-                            $order->setBaseTotalPaid($response->amount);
-                            $order->save();
-                            $transactionSave = $this->transactionFactory->create();
-                            $transactionSave->addObject($invoice);
-                            $transactionSave->addObject($invoice->getOrder());
-                            $transactionSave->save();
-
-                            try {
-                                //send e-mail
-                                $this->invoiceSender->send($invoice);
-                            } catch (\Exception $e) {
-                                $this->messageManager->addError(__('We can\'t send the invoice email right now.'));
-                            }
-                        } else {
-                            $order->addStatusHistoryComment('Order already have an invoice!', false);
-                        }
-                    } elseif ($response->payment->status == '3' || $response->payment->status == '7') {
-                        $order = $this->orderRepository->get($order->getEntityId());
-                        /**$storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
-                        $state = $this->scopeConfig->getValue("payment/ipagcc/order_cancel", $storeScope);
-                        if (in_array($state, $this->ipagOrderStatus->getAvailableStatus())) {
-                            $order->setState($state);
-                        }
-                        $order->setStatus($state);*/
-                        $order->addStatusHistoryComment('Order status UPDATED', false);
-                        $this->orderManagement->cancel($order->getEntityId());
-                        $this->orderRepository->save($order);
-                    }
-
-                    //atualização do orderInfo com a informação atualizada
-                    $json = json_decode(json_encode($response), true);
-                    $payment = $order->getPayment();
-                    $this->ipagLogger->loginfo([$response], self::class . ' RESPONSE RAW');
-                    $this->ipagLogger->loginfo($json, self::class . ' RESPONSE JSON');
-                    foreach ($json as $j => $k) {
-                        if (is_array($k)) {
-                            foreach ($k as $l => $m) {
-                                $name = $j . '.' . $l;
-                                $json[$name] = $m;
-                                $payment->setAdditionalInformation($name, $m);
-                            }
-                            unset($json[$j]);
-                        } else {
-                            $payment->setAdditionalInformation($j, $k);
-                        }
-                    }
-
-                    $status = \Ipag\Payment\Helper\Data::translatePaymentStatusToOrderStatus($response->payment->status);
-
-                    if ($status) {
-                        $state = \Ipag\Payment\Helper\Data::getStateFromStatus($status);
-
-                        $order->setStatus($status);
-
-                        if ($state)
-                            $order->setState($state);
-                    }
-
-                    $order->save();
-
-                    $order->addStatusHistoryComment(
-                        __(
-                            'iPag callback: status: %1, message: %2.',
-                            $response->payment->status,
-                            $response->payment->message
-                        )
-                    )
-                        ->setIsCustomerNotified(false)
-                        ->save();
-                }
-            }
-        } catch (\Exception $e) {
-            echo $e->getMessage();
-            $this->messageManager->addError($e->getMessage());
-        }
+    private function log(string $level, string $message, array $context = [])
+    {
+        $this->logger->{$level}($this->logPrefix . ': ' . $message, $context);
     }
 }

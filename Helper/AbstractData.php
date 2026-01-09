@@ -2,8 +2,6 @@
 
 namespace Ipag\Payment\Helper;
 
-use Ipag\Payment\Exception\IpagPaymentException;
-
 abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 {
     protected $_scopeConfig;
@@ -118,7 +116,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     abstract public function getSDKProviderPackageName();
 
     public function getCustomerDataFromOrder($order) {
-        // Nome do cliente
+
         if (!$order->getCustomerFirstname()) {
             $name = $order->getBillingAddress() ? $order->getBillingAddress()->getName() : '';
         } else {
@@ -161,10 +159,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Tenta obter o CPF/CNPJ (somente dígitos) relacionado a um pedido.
-     * Ordem de tentativa: customer attribute -> order data -> billing address (vat_id ou atributos configurados).
-     * Retorna string vazia se não encontrar.
-     *
      * @param \Magento\Sales\Model\Order $order
      * @return string
      */
@@ -172,7 +166,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $taxvat = '';
 
-        // 1) Tenta carregar do customer (se existir customerId)
         $customerId = $order->getCustomerId();
         if (!empty($customerId)) {
             try {
@@ -187,12 +180,9 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
                         $taxvat = $value;
                     }
                 }
-            } catch (\Exception $e) {
-                // ignore e continue com outros fallback
-            }
+            } catch (\Exception $e) { }
         }
 
-        // 2) Tenta dados do order (customer_taxvat)
         if (empty($taxvat)) {
             $maybe = $order->getData('customer_taxvat');
             if (!empty($maybe)) {
@@ -200,7 +190,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        // 3) Tenta endereço de cobrança
         $billing = $order->getBillingAddress();
         if ($billing && empty($taxvat)) {
             $maybe = '';
@@ -215,7 +204,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
                 $taxvat = $maybe;
             }
 
-            // tentar atributos configurados (cpf/cnpj em address)
             if (empty($taxvat)) {
                 $attrCpf = $this->getCpfAttributeForAddress();
                 if (!empty($attrCpf)) {
@@ -236,7 +224,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        // 4) sanitiza e retorna apenas números
         $taxvat = preg_replace('/[^0-9]/', '', (string) $taxvat);
 
         return $taxvat;
@@ -661,28 +648,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         return $apikey;
     }
 
-    public function getInfoUrlPreferenceInfo($type)
-    {
-        $_environment = $this->getEnvironmentMode();
-        $id = $this->_scopeConfig->getValue(
-            'payment/ipagbase/' . $type . '_id_' . $_environment,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-
-        return $id;
-    }
-
-    public function getInfoUrlPreferenceToken($type)
-    {
-        $_environment = $this->getEnvironmentMode();
-        $token = $this->_scopeConfig->getValue(
-            'payment/ipagbase/' . $type . '_token_' . $_environment,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-
-        return $token;
-    }
-
     public function getStoreUrl()
     {
         return $this->_storeManager->getStore()->getBaseUrl();
@@ -690,7 +655,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function buildCallbackUrl()
     {
-        return $this->getStoreUrl() . 'ipag/notification/Callback';
+        // return $this->getStoreUrl() . 'ipag/notification/Callback';
+        return 'https://ipag-magento2.requestcatcher.com/callback'; //TODO: voltar para a linha de cima
     }
 
     public function buildRedirectUrl($payload = [])
@@ -709,12 +675,12 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public static function translatePaymentStatusToOrderStatus($paymentStatus) {
         if (empty($paymentStatus) || !filter_var($paymentStatus, FILTER_VALIDATE_INT))
-            return false; // throw new \InvalidArgumentException('unprocessed payment status');
+            return false;
 
         settype($paymentStatus, 'int');
 
         if (!array_key_exists($paymentStatus, self::IPAG_PAYMENT_STATUS))
-            return false; // throw new \InvalidArgumentException('unprocessed payment status');
+            return false;
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
