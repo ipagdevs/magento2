@@ -4,8 +4,8 @@ namespace Ipag\Payment\Model\Method\V2;
 
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Model\Method\AbstractBoleto;
-use Ipag\Payment\Exception\IpagPaymentCcException;
 use Ipag\Payment\Model\Support\PaymentResponseMapper;
+use Ipag\Payment\Exception\IpagPaymentBoletoException;
 
 class Boleto extends AbstractBoleto
 {
@@ -87,7 +87,7 @@ class Boleto extends AbstractBoleto
 
             return $maskedResponseData;
         } catch (\Throwable $th) {
-            throw new IpagPaymentCcException('Error executing Boleto transaction', 0, $th);
+            throw new IpagPaymentBoletoException('Error executing Boleto transaction', 0, $th);
         }
 
     }

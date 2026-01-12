@@ -7,7 +7,7 @@ use Monolog\Handler\StreamHandler;
 
 class Logger extends Monologger
 {
-    private const FILENAME = 'ipag-logs.log';
+    private const FILENAME = 'ipag-payment-logs.log';
     private const LOG_DIR = '/var/log/ipag/';
 
     public function __construct($filename = '', $logDir = '')
@@ -59,7 +59,7 @@ class Logger extends Monologger
                         $public[$name][] = $item;
                     }
                 }
-            } else if (is_object($value)) {
+            } elseif (is_object($value)) {
                 $public[$name] = self::extract_props($value);
             } else {
                 $public[$name] = $value;

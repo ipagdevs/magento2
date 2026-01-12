@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Model\Method;
 
+use Ipag\Payment\Exception\IpagPaymentException;
+
 abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
@@ -137,15 +139,12 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         $this->processPayment($payment);
 
-        $status = $order->getStatus();
         $state = $order->getState();
+        $status = $order->getStatus();
 
         $this->_ipagHelper->updateStateObject($stateObject, $status, $state);
 
-        $this->logger->loginfo([
-            'state' => $state,
-            'status' => $status,
-        ], self::class . ' iPag Cc update order #' . $order->getIncrementId() . ' state object.');
+        $this->logger->loginfo(compact('state', 'status'), self::class . ' iPag Cc update order #' . $order->getIncrementId() . ' state object.');
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
@@ -153,7 +152,8 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         return '';
     }
 
-    public function assignData(\Magento\Framework\DataObject $data) {
+    public function assignData(\Magento\Framework\DataObject $data)
+    {
         parent::assignData($data);
 
         $infoInstance = $this->getInfoInstance();
@@ -228,6 +228,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $InfoInstance);
 
+        //@NOTE: possivel bug aqui na V2, pois agora a v2 faz transform do response para compatibilidade com a v1
         list($status, $message) = $this->_ipagHelper->getStatusFromResponse($transactionResponse);
 
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
@@ -255,7 +256,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
             $captureResponse = $this->execCapture($provider, $tid, $captureAmount);
 
-            list($status,) = $this->_ipagHelper->getStatusFromResponse($captureResponse);
+            list($status, ) = $this->_ipagHelper->getStatusFromResponse($captureResponse);
 
             if ($status != '8') {
                 throw new \Magento\Framework\Exception\LocalizedException(__('Capture failed. Status: ' . $status));
@@ -273,8 +274,9 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         try {
             if (!class_exists($this->_ipagHelper->getSDKProviderClassName())) {
                 throw new IpagPaymentException(
-                    \sprintf('iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
-                    $this->_ipagHelper->getSDKProviderPackageName(),
+                    \sprintf(
+                        'iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
+                        $this->_ipagHelper->getSDKProviderPackageName(),
                         $this->_ipagHelper->getSDKProviderPackageName()
                     )
                 );
@@ -290,7 +292,8 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         return $selfActive;
     }
 
-    public function validate() {
+    public function validate()
+    {
         return $this->_ipagHelper->AuthorizationValidate();
     }
 

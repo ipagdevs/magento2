@@ -9,12 +9,12 @@ use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
 class Cc extends AbstractCc
 {
-	protected $implementationVersion = 'v2';
+    protected $implementationVersion = 'v2';
 
-	public function getImplementationVersion()
-	{
-		return $this->implementationVersion;
-	}
+    public function getImplementationVersion()
+    {
+        return $this->implementationVersion;
+    }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
@@ -74,7 +74,8 @@ class Cc extends AbstractCc
         return $transactionOrder;
     }
 
-    protected function execTransaction($provider, $payload) {
+    protected function execTransaction($provider, $payload)
+    {
         $maskedPayload = MaskUtils::applyMaskRecursive($payload->jsonSerialize());
 
         $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
@@ -99,7 +100,8 @@ class Cc extends AbstractCc
 
     }
 
-    protected function execCapture($provider, $tid, $amount = null) {
+    protected function execCapture($provider, $tid, $amount = null)
+    {
         //TODO: Implement capture for v2 API
     }
 }

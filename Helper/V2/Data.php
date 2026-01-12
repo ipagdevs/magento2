@@ -5,6 +5,7 @@ namespace Ipag\Payment\Helper\V2;
 use Kubinyete\Assertation\Assert;
 use Ipag\Payment\Helper\AbstractData;
 use Ipag\Payment\Exception\IpagPaymentException;
+use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
 final class Data extends AbstractData
 {
@@ -244,11 +245,30 @@ final class Data extends AbstractData
         return $payment;
     }
 
-    public function getStatusFromResponse($response)
+    public function getProviderTransactionById($id)
     {
-        $status = isset($response['status']) && isset($response['status']['code']) ? $response['status']['code'] : null;
-        $message = isset($response['acquirer']) && isset($response['acquirer']['message']) ? $response['acquirer']['message'] : null;
+        $client = $this->AuthorizationValidate();
 
-        return [$status, $message];
+        $responsePayment = $client->payment()->getById($id);
+
+        $data = $responsePayment->getData();
+
+        $translatedData = PaymentResponseMapper::translateToV1($data);
+
+        return $translatedData;
     }
+
+    public function getProviderTransactionByTid($tid)
+    {
+        $client = $this->AuthorizationValidate();
+
+        $responsePayment = $client->payment()->getByTid($tid);
+
+        $data = $responsePayment->getData();
+
+        $translatedData = PaymentResponseMapper::translateToV1($data);
+
+        return $translatedData;
+    }
+
 }

@@ -60,7 +60,8 @@ class Cc extends AbstractCc
         return parent::processPayment($payment);
     }
 
-    protected function execTransaction($provider, $payload) {
+    protected function execTransaction($provider, $payload)
+    {
         $maskedPayload = MaskUtils::applyMaskRecursive($payload->serialize());
 
         $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
@@ -73,8 +74,9 @@ class Cc extends AbstractCc
 
         $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
-        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
             throw new IpagPaymentCcException($json['errorMessage']);
+        }
 
         return $json;
     }
@@ -84,7 +86,8 @@ class Cc extends AbstractCc
         return parent::capture($payment, $amount);
     }
 
-    protected function execCapture($provider, $tid, $amount = null) {
+    protected function execCapture($provider, $tid, $amount = null)
+    {
         $this->logger->loginfo("Capture TID: $tid Amount: $amount", self::class . ' CAPTURE REQUEST');
 
         $transaction = $provider->transaction()->setTid($tid);
@@ -99,8 +102,9 @@ class Cc extends AbstractCc
 
         $this->logger->loginfo($json, self::class . ' CAPTURE RESPONSE JSON');
 
-        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
             throw new IpagPaymentCcException($json['errorMessage']);
+        }
 
         return $json;
     }

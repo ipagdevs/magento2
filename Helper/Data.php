@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Helper;
 
+use Ipag\Payment\Exception\IpagPaymentException;
+
 final class Data extends AbstractData
 {
 
@@ -163,11 +165,23 @@ final class Data extends AbstractData
         return $payment;
     }
 
-    public function getStatusFromResponse($response)
+    public function getProviderTransactionById($id)
     {
-        $status = isset($response['payment']) && isset($response['payment']['status']) ? $response['payment']['status'] : null;
-        $message = isset($response['payment']) && isset($response['payment']['message']) ? $response['payment']['message'] : null;
+        throw new \Exception('The Provider API v1 does not support search by ID.');
+    }
 
-        return [$status, $message];
+    public function getProviderTransactionByTid($tid)
+    {
+        $ipag = $this->AuthorizationValidate();
+
+        $response = $ipag->transaction()->setTid($tid)->consult();
+
+        $json = json_decode(json_encode($response), true);
+
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
+            throw new IpagPaymentException($json['errorMessage']);
+        }
+
+        return $json;
     }
 }

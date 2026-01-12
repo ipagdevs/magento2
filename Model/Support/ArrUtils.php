@@ -89,17 +89,20 @@ abstract class ArrUtils
     public static function clearArray(array $array, ?bool $falsy = false): array
     {
         foreach ($array as $key => &$value) {
-            if (is_array($value))
+            if (is_array($value)) {
                 $value = self::clearArray($value, $falsy);
+            }
 
-            if ($value === null || (is_array($value) && count($value) === 0) || (true === $falsy && !$value))
+            if ($value === null || (is_array($value) && count($value) === 0) || (true === $falsy && !$value)) {
                 unset($array[$key]);
+            }
         }
 
         return $array;
     }
 
-    public static function arrayToObject($array) {
+    public static function arrayToObject($array)
+    {
         return is_array($array) ? (object) array_map([__CLASS__, __METHOD__], $array) : $array;
     }
 }

@@ -3,13 +3,16 @@
 namespace Ipag\Payment\Controller\Notification;
 
 use Ipag\Payment\Model\Support\ArrUtils;
-use Ipag\Payment\Model\Support\SerializerUtils;
 use Magento\Framework\App\Action\Action;
+use Ipag\Payment\Model\Support\MaskUtils;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Ipag\Payment\Model\Support\SerializerUtils;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Ipag\Payment\Service\PaymentCallbackService;
 use Magento\Framework\App\CsrfAwareActionInterface;
+use Ipag\Payment\Block\Adminhtml\System\Config\ApiVersion;
 use Magento\Framework\App\Request\InvalidRequestException;
 
 class Callback extends Action implements CsrfAwareActionInterface
@@ -23,9 +26,8 @@ class Callback extends Action implements CsrfAwareActionInterface
     private $invoiceSender;
     private $productMetadata;
     private $transactionFactory;
-    private $helperFactory;
-    private $ipagHelper;
     private $logPrefix = '';
+    private PaymentCallbackService $paymentCallbackService;
 
     public function __construct(
         Context $context,
@@ -35,53 +37,70 @@ class Callback extends Action implements CsrfAwareActionInterface
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
+        PaymentCallbackService $paymentCallbackService,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Ipag\Payment\Factory\HelperFactory $helperFactory,
-        \Magento\Framework\DB\TransactionFactory $transactionFactory
+        \Magento\Framework\DB\TransactionFactory $transactionFactory,
+        \Ipag\Payment\Logger\Logger $logger
     ) {
         parent::__construct($context);
 
         $this->logPrefix = uniqid('callback_');
 
         $this->order = $order;
+        $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->invoiceSender = $invoiceSender;
-        $this->helperFactory = $helperFactory;
         $this->invoiceService = $invoiceService;
         $this->orderManagement = $orderManagement;
         $this->orderRepository = $orderRepository;
         $this->productMetadata = $productMetadata;
         $this->transactionFactory = $transactionFactory;
-        $this->logger = new \Ipag\Payment\Logger\Logger('ipag-callbacks.log');
 
-        $this->_initializeModule();
+        $this->paymentCallbackService = $paymentCallbackService;
+
+        $this->paymentCallbackService->setLogger($this->logger);
     }
 
     public function execute()
     {
-        $this->log('info', 'execute start');
+        $this->log('info', 'received request');
 
         try {
+            $version = $this->detectApiVersionFromRequest();
 
             $identifier = $this->getIdentifierRequestParam();
 
-            if (!$identifier)
+            if (!$identifier) {
                 throw new \Exception('No identifier found in request.');
+            }
 
-            //@NOTE: ver o chat: adicionar campo vat no checkout...
+            $this->paymentCallbackService->useHelperFactory($version);
 
-            //TODO: Process the response as needed
-            // $this->callbackService->handleCallback($raw);
+            $this->paymentCallbackService->authorizationValidate();
 
-            //  $this->getResponse()->setStatusCode(200)->setBody('OK');
+            $payloadCallback = $this->paymentCallbackService->handlePrepareCallbackPayload($identifier);
 
-        } catch (\Exception $e) {
+            if (!$payloadCallback) {
+                throw new \Exception('No provider transaction found for the given identifier.');
+            }
+
+            $maskedResponseData = MaskUtils::applyMaskRecursive($payloadCallback);
+
+            $this->log('info', 'prepared callback payload', $maskedResponseData);
+
+            $this->paymentCallbackService->handleCallback($payloadCallback);
+
+            $this->log('info', 'callback finished successfully');
+
+            $this->getResponse()->setStatusCode(200)->setBody('OK');
+        } catch (\Throwable $th) {
             $this->log(
                 'error',
-                'exception: ' . $e->getMessage(),
-                ['exception' => strval($e)]
+                'callback error: ' . $th->getMessage(),
+                ['exception' => strval($th)]
             );
-            // $this->getResponse()->setStatusCode(500)->setBody('Internal error');
+            $this->log('info', 'callback finished with errors');
+            $this->getResponse()->setStatusCode(500)->setBody('Payment service unavailable. Contact support.');
         }
     }
 
@@ -89,14 +108,50 @@ class Callback extends Action implements CsrfAwareActionInterface
     {
         $tid = $this->getRequest()->getParam('id_transacao');
 
-        if ($tid)
-            return compact('tid');
+        $handleLog = function ($identifier) {
+            $this->log('info', 'received request params', [
+                'uri' => $this->getRequest()->getRequestUri(),
+                'url_params' => $this->getRequest()->getParams(),
+                'identifier' => $identifier
+            ]);
+        };
+
+        if ($tid) {
+            $tidRequestParam = compact('tid');
+            $handleLog($tidRequestParam);
+
+            return $tidRequestParam;
+        }
 
         $requestPayload = $this->parseRequest();
 
-        $id = ArrUtils::get($requestPayload, 'id');
+        $requestPayloadTid = ArrUtils::get($requestPayload, 'id_transacao');
 
-        return $id ? compact('id') : null;
+        if (!$requestPayloadTid) {
+            $requestPayloadTid = ArrUtils::get($requestPayload, 'attributes.tid');
+        }
+
+        if ($requestPayloadTid) {
+            $tidRequestPayload = ['tid' => $requestPayloadTid ];
+            $handleLog($tidRequestPayload);
+
+            return $tidRequestPayload;
+        }
+
+        $requestPayloadId = ArrUtils::get($requestPayload, 'id');
+
+        if (!$requestPayloadId) {
+            $requestPayloadId = ArrUtils::get($requestPayload, 'id_librepag');
+        }
+
+        if ($requestPayloadId) {
+            $idRequestPayload = ['id' => $requestPayloadId ];
+            $handleLog($idRequestPayload);
+
+            return $idRequestPayload;
+        }
+
+        return null;
     }
 
     /**
@@ -108,13 +163,15 @@ class Callback extends Action implements CsrfAwareActionInterface
 
         $serializer = SerializerUtils::getSuitableSerializer($raw);
 
-        if ($serializer === null)
+        if ($serializer === null) {
             throw new \Exception('No suitable serializer found for request payload.');
+        }
 
         $requestParsed = $serializer->deserialize($raw);
 
-        if (empty($requestParsed))
+        if (empty($requestParsed)) {
             throw new \Exception('Failed to parse request payload.');
+        }
 
         $this->log('info', 'Parsed request payload', $requestParsed);
 
@@ -131,14 +188,19 @@ class Callback extends Action implements CsrfAwareActionInterface
         return true;
     }
 
-    private function _initializeModule()
-    {
-        $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        $this->ipagHelper = $this->helperFactory->createForVersion($version);
-    }
-
     private function log(string $level, string $message, array $context = [])
     {
         $this->logger->{$level}($this->logPrefix . ': ' . $message, $context);
+    }
+
+    private function detectApiVersionFromRequest(): string|null
+    {
+        $headerXIpagEvent = (string) $this->getRequest()->getHeader('X-Ipag-Event');
+        $headerIpagEvent = (string) $this->getRequest()->getHeader('Ipag-Event');
+        $headerIpagSignature = (string) $this->getRequest()->getHeader('Ipag-Signature');
+
+        $existsHeaders = !empty($headerXIpagEvent) || !empty($headerIpagEvent) || !empty($headerIpagSignature);
+
+        return $existsHeaders ? ApiVersion::API_VERSION_V2 : ApiVersion::API_VERSION_V1;
     }
 }

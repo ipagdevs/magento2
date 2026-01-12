@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Helper;
 
+use Ipag\Payment\Model\Support\ArrUtils;
+
 abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 {
     protected $_scopeConfig;
@@ -111,11 +113,13 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         ];
     }
 
-    abstract public function getStatusFromResponse($response);
     abstract public function getSDKProviderClassName();
     abstract public function getSDKProviderPackageName();
+    abstract public function getProviderTransactionById($id);
+    abstract public function getProviderTransactionByTid($tid);
 
-    public function getCustomerDataFromOrder($order) {
+    public function getCustomerDataFromOrder($order)
+    {
 
         if (!$order->getCustomerFirstname()) {
             $name = $order->getBillingAddress() ? $order->getBillingAddress()->getName() : '';
@@ -180,7 +184,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
                         $taxvat = $value;
                     }
                 }
-            } catch (\Exception $e) { }
+            } catch (\Exception $e) {
+            }
         }
 
         if (empty($taxvat)) {
@@ -673,21 +678,25 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @return string|false
      */
-    public static function translatePaymentStatusToOrderStatus($paymentStatus) {
-        if (empty($paymentStatus) || !filter_var($paymentStatus, FILTER_VALIDATE_INT))
+    public static function translatePaymentStatusToOrderStatus($paymentStatus)
+    {
+        if (empty($paymentStatus) || !filter_var($paymentStatus, FILTER_VALIDATE_INT)) {
             return false;
+        }
 
         settype($paymentStatus, 'int');
 
-        if (!array_key_exists($paymentStatus, self::IPAG_PAYMENT_STATUS))
+        if (!array_key_exists($paymentStatus, self::IPAG_PAYMENT_STATUS)) {
             return false;
+        }
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
         $scopeConfig = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface');
 
-        if (empty(self::IPAG_PAYMENT_STATUS[$paymentStatus]['config_name']))
+        if (empty(self::IPAG_PAYMENT_STATUS[$paymentStatus]['config_name'])) {
             return false;
+        }
 
         $value = $scopeConfig->getValue(
             'payment/ipagbase/order_status/' . self::IPAG_PAYMENT_STATUS[$paymentStatus]['config_name'],
@@ -701,7 +710,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
      * @param string $status
      * @return string|false
      */
-    public static function getStateFromStatus($status) {
+    public static function getStateFromStatus($status)
+    {
         $stateFound = false;
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
@@ -718,7 +728,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         return $stateFound;
     }
 
-    public function registerAdditionalInfoTransactionData($responseJson, $InfoInstance) {
+    public function registerAdditionalInfoTransactionData($responseJson, $InfoInstance)
+    {
         $walker = function ($data, $prefix = '') use (&$walker, $InfoInstance) {
             if (is_object($data)) {
                 $data = (array) $data;
@@ -745,7 +756,8 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         $walker($responseJson);
     }
 
-    public function getAdditionalInfoTransactionData($InfoInstance) {
+    public function getAdditionalInfoTransactionData($InfoInstance)
+    {
         $data = [];
         $keys = $InfoInstance->getAdditionalInformationKeys();
 
@@ -756,28 +768,32 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         return $data;
     }
 
-    public function registerOrderStatusHistory($order, $paymentStatus, $comment) {
+    public function registerOrderStatusHistory($order, $paymentStatus, $comment, $callback = false)
+    {
 
         $status  = \Ipag\Payment\Helper\AbstractData::translatePaymentStatusToOrderStatus($paymentStatus);
 
-        if (!$status)
+        if (!$status) {
             $status = \Magento\Sales\Model\Order::STATE_NEW;
+        }
 
         $state = \Ipag\Payment\Helper\AbstractData::getStateFromStatus($status);
 
         $order->setStatus($status);
 
-        if ($state)
+        if ($state) {
             $order->setState($state);
+        }
 
         $order->addStatusHistoryComment(
-            __('iPag response: status: %1, message: %2.', $status, $comment)
+            __('iPag %1: status: %2, message: %3.', $callback ? 'callback' : 'response', $status, $comment)
         )->setIsCustomerNotified(false);
 
         $order->save();
     }
 
-    public function updateStateObject($stateObject, $status, $state) {
+    public function updateStateObject($stateObject, $status, $state)
+    {
         if ($state) {
             $stateObject->setState($state);
         }
@@ -787,5 +803,24 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $stateObject->setIsNotified(false);
+    }
+
+    public function getStatusFromResponse($response)
+    {
+        $status = ArrUtils::get($response, 'payment.status');
+        $message = ArrUtils::get($response, 'payment.message');
+
+        return [$status, $message];
+    }
+
+    public function getProviderTransaction($identifier)
+    {
+        if ($id = ArrUtils::get($identifier, 'id')) {
+            return $this->getProviderTransactionById($id);
+        } elseif ($tid = ArrUtils::get($identifier, 'tid')) {
+            return $this->getProviderTransactionByTid($tid);
+        }
+
+        return null;
     }
 }

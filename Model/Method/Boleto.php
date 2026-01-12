@@ -2,7 +2,7 @@
 namespace Ipag\Payment\Model\Method;
 
 use Ipag\Payment\Model\Support\MaskUtils;
-use Ipag\Payment\Exception\IpagPaymentCcException;
+use Ipag\Payment\Exception\IpagPaymentBoletoException;
 
 class Boleto extends AbstractBoleto
 {
@@ -72,8 +72,9 @@ class Boleto extends AbstractBoleto
 
         $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
-        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage']))
-            throw new IpagPaymentCcException($json['errorMessage']);
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
+            throw new IpagPaymentBoletoException($json['errorMessage']);
+        }
 
         return $json;
     }

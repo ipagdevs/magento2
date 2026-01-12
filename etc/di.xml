@@ -38,5 +38,28 @@
             <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\BoletoFactory</argument>
         </arguments>
     </type>
+
+    <virtualType name="Ipag\Payment\Logger\CallbackLogger" type="Ipag\Payment\Logger\Logger">
+        <arguments>
+            <argument name="filename" xsi:type="string">ipag-callback-logs.log</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Ipag\Payment\Controller\Notification\Callback">
+        <arguments>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="Ipag\Payment\Dispatcher\PaymentCallbackDispatcher">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="approved" xsi:type="object">Ipag\Payment\Handler\PaymentApprovedCallbackHandler</item>
+                <item name="declined" xsi:type="object">Ipag\Payment\Handler\PaymentDeclinedCallbackHandler</item>
+                <item name="refunded" xsi:type="object">Ipag\Payment\Handler\PaymentRefundCallbackHandler</item>
+            </argument>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+        </arguments>
+    </type>
     <!-- Note: helper provider is injected into the switcher; individual method classes do not require it here -->
 </config>

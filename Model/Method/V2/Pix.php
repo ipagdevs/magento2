@@ -4,7 +4,7 @@ namespace Ipag\Payment\Model\Method\V2;
 
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Model\Method\AbstractPix;
-use Ipag\Payment\Exception\IpagPaymentCcException;
+use Ipag\Payment\Exception\IpagPaymentPixException;
 use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
 class Pix extends AbstractPix
@@ -87,7 +87,7 @@ class Pix extends AbstractPix
 
             return $maskedResponseData;
         } catch (\Throwable $th) {
-            throw new IpagPaymentCcException('Error executing Pix transaction', 0, $th);
+            throw new IpagPaymentPixException('Error executing Pix transaction', 0, $th);
         }
     }
 }

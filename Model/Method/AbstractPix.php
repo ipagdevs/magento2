@@ -118,15 +118,12 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
 
         $this->processPayment($payment);
 
-        $status = $order->getStatus();
         $state = $order->getState();
+        $status = $order->getStatus();
 
         $this->_ipagHelper->updateStateObject($stateObject, $status, $state);
 
-        $this->logger->loginfo([
-            'state' => $state,
-            'status' => $status,
-        ], self::class . ' iPag Pix update order #' . $order->getIncrementId() . ' state object.');
+        $this->logger->loginfo(compact('state', 'status'), self::class . ' iPag Pix update order #' . $order->getIncrementId() . ' state object.');
     }
 
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
@@ -195,8 +192,9 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
         try {
             if (!class_exists($this->_ipagHelper->getSDKProviderClassName())) {
                 throw new IpagPaymentException(
-                    \sprintf('iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
-                    $this->_ipagHelper->getSDKProviderPackageName(),
+                    \sprintf(
+                        'iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
+                        $this->_ipagHelper->getSDKProviderPackageName(),
                         $this->_ipagHelper->getSDKProviderPackageName()
                     )
                 );

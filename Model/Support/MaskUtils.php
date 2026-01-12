@@ -4,7 +4,8 @@ namespace Ipag\Payment\Model\Support;
 
 abstract class MaskUtils
 {
-    public static function applyMaskRecursive($data) {
+    public static function applyMaskRecursive($data)
+    {
         if (is_array($data)) {
             $maskedData = [];
             foreach ($data as $key => $value) {
@@ -34,11 +35,10 @@ abstract class MaskUtils
                 return '***';
             case false !== strpos(mb_strtoupper($key), 'CPF'):
                 return preg_replace('/^(\d{2})\d*(\d{2})$/', '$1.***.***-$2', preg_replace('/\D/', '', $value));
-            case
-                false !== strpos(mb_strtoupper($key), 'SKU') ||
-                false !== strpos(mb_strtoupper($key), 'NOM') ||
-                false !== strpos(mb_strtoupper($key), 'NAM') ||
-                false !== strpos(mb_strtoupper($key), 'HOL'):
+            case false !== strpos(mb_strtoupper($key), 'SKU') ||
+            false !== strpos(mb_strtoupper($key), 'NOM') ||
+            false !== strpos(mb_strtoupper($key), 'NAM') ||
+            false !== strpos(mb_strtoupper($key), 'HOL'):
                 return array_reduce(
                     preg_split('/\s+/', $value),
                     fn ($carry, $item) => !$carry ? $item : "{$carry} " . str_repeat('*', strlen($item)),
@@ -55,17 +55,16 @@ abstract class MaskUtils
                         $matches[6],
                     $value
                 );
-            case
-                false !== strpos(mb_strtoupper($key), 'PHONE') ||
-                false !== strpos(mb_strtoupper($key), 'FONE') ||
-                false !== strpos(mb_strtoupper($key), 'MOBILE') ||
-                false !== strpos(mb_strtoupper($key), 'CELULAR'):
+            case false !== strpos(mb_strtoupper($key), 'PHONE') ||
+            false !== strpos(mb_strtoupper($key), 'FONE') ||
+            false !== strpos(mb_strtoupper($key), 'MOBILE') ||
+            false !== strpos(mb_strtoupper($key), 'CELULAR'):
                 return preg_replace('/(?<=\d{2})\d(?=\d{4})/', '*', preg_replace('/\D/', '', $value));
             case false !== strpos(mb_strtoupper($key), 'CPF') ||
-                false !== strpos(mb_strtoupper($key), 'CNPJ'):
+            false !== strpos(mb_strtoupper($key), 'CNPJ'):
                 return preg_replace('/^(\d{2})\d*(\d{2})$/', '$1.***.***-$2', preg_replace('/\D/', '', $value));
             case false !== strpos(mb_strtoupper($key), 'NUM') ||
-                 false !== strpos(mb_strtoupper($key), 'EXPIRY'):
+            false !== strpos(mb_strtoupper($key), 'EXPIRY'):
                 $digits = preg_replace('/\D/', '', $value);
                 $len = strlen($digits);
                 if ($len <= 2) {
@@ -73,10 +72,9 @@ abstract class MaskUtils
                 }
                 $masked = substr($digits, 0, 1) . str_repeat('*', max(0, $len - 2)) . substr($digits, -1);
                 return $masked;
-            case
-                false !== strpos(mb_strtoupper($key), 'CEP') ||
-                false !== strpos(mb_strtoupper($key), 'ZIPCODE') ||
-                false !== strpos(mb_strtoupper($key), 'POSTCODE'):
+            case false !== strpos(mb_strtoupper($key), 'CEP') ||
+            false !== strpos(mb_strtoupper($key), 'ZIPCODE') ||
+            false !== strpos(mb_strtoupper($key), 'POSTCODE'):
                 return preg_replace('/.(?=.{3})/', '*', preg_replace('/\D/', '', $value));
             default:
                 return $value;
