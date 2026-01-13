@@ -2,8 +2,6 @@
 
 namespace Ipag\Payment\Model\Method;
 
-use Ipag\Payment\Exception\IpagPaymentException;
-
 abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
@@ -176,6 +174,8 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
             $infoInstance
         );
 
+        $order->save();
+
         $transactionResponse = $this->execTransaction($provider, $transactionPayload);
 
         $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $infoInstance);
@@ -190,16 +190,7 @@ abstract class AbstractPix extends \Magento\Payment\Model\Method\Cc implements \
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         try {
-            if (!class_exists($this->_ipagHelper->getSDKProviderClassName())) {
-                throw new IpagPaymentException(
-                    \sprintf(
-                        'iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
-                        $this->_ipagHelper->getSDKProviderPackageName(),
-                        $this->_ipagHelper->getSDKProviderPackageName()
-                    )
-                );
-            }
-
+            $this->_ipagHelper->validateSDKExists();
             $this->validate();
         } catch (\Throwable $th) {
             $this->logger->error('Pix error: ' . $th->getMessage());

@@ -61,5 +61,11 @@
             <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
         </arguments>
     </type>
+    <type name="Ipag\Payment\Handler\AbstractPaymentCallbackHandler">
+        <arguments>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+            <argument name="invoiceService" xsi:type="object">Magento\Sales\Model\Service\InvoiceService</argument>
+        </arguments>
+    </type>
     <!-- Note: helper provider is injected into the switcher; individual method classes do not require it here -->
 </config>

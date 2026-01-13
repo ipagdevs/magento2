@@ -2,8 +2,6 @@
 
 namespace Ipag\Payment\Model\Method;
 
-use Ipag\Payment\Exception\IpagPaymentException;
-
 abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
@@ -207,6 +205,8 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
         $order->setGrandTotal($total);
         $order->setBaseGrandTotal($total);
 
+        $order->save();
+
         if ($additionalPrice >= 0.01) {
             $brl = 'R$';
             $formatted = number_format($additionalPrice, '2', ',', '.');
@@ -228,7 +228,6 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         $this->_ipagHelper->registerAdditionalInfoTransactionData($transactionResponse, $InfoInstance);
 
-        //@NOTE: possivel bug aqui na V2, pois agora a v2 faz transform do response para compatibilidade com a v1
         list($status, $message) = $this->_ipagHelper->getStatusFromResponse($transactionResponse);
 
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
@@ -272,16 +271,7 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
     public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         try {
-            if (!class_exists($this->_ipagHelper->getSDKProviderClassName())) {
-                throw new IpagPaymentException(
-                    \sprintf(
-                        'iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
-                        $this->_ipagHelper->getSDKProviderPackageName(),
-                        $this->_ipagHelper->getSDKProviderPackageName()
-                    )
-                );
-            }
-
+            $this->_ipagHelper->validateSDKExists();
             $this->validate();
         } catch (\Throwable $th) {
             $this->logger->error('Cc error: ' . $th->getMessage());

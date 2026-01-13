@@ -39,6 +39,7 @@ class PaymentCallbackService
 
     public function authorizationValidate()
     {
+        $this->ipagHelper->validateSDKExists();
         return $this->ipagHelper->AuthorizationValidate();
     }
 
@@ -60,8 +61,9 @@ class PaymentCallbackService
 
         list($status, $message) = $this->ipagHelper->getStatusFromResponse($callbackPayload);
 
-        $this->ipagHelper->registerOrderStatusHistory($order, $status, $message);
+        $this->ipagHelper->registerOrderStatusHistory($order, $status, $message, true);
 
+        $this->logger->info('added status history comment for Order Id #' . $order->getIncrementId() . ', Order status: ' . $status . ', Message response: ' . $message . '.');
     }
 
     private function getOrderFromCallbackPayload(array $callbackPayload)
@@ -73,6 +75,11 @@ class PaymentCallbackService
         }
 
         $order = $this->orderFactory->create()->loadByIncrementId($payloadOrderId);
+
+        if (!$order->getId()) {
+            throw new \Exception('Payment order not found.');
+        }
+
         return $order;
     }
 

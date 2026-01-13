@@ -65,8 +65,13 @@ class Callback extends Action implements CsrfAwareActionInterface
     {
         $this->log('info', 'received request');
 
+        $version = $this->detectApiVersionFromRequest();
+
         try {
-            $version = $this->detectApiVersionFromRequest();
+
+            $this->paymentCallbackService->useHelperFactory($version);
+
+            $this->paymentCallbackService->authorizationValidate();
 
             $identifier = $this->getIdentifierRequestParam();
 
@@ -74,11 +79,7 @@ class Callback extends Action implements CsrfAwareActionInterface
                 throw new \Exception('No identifier found in request.');
             }
 
-            $this->paymentCallbackService->useHelperFactory($version);
-
-            $this->paymentCallbackService->authorizationValidate();
-
-            $payloadCallback = $this->paymentCallbackService->handlePrepareCallbackPayload($identifier);
+            $payloadCallback = $this->paymentCallbackService->handlePrepareCallbackPayload(receivedIdentifier: $identifier);
 
             if (!$payloadCallback) {
                 throw new \Exception('No provider transaction found for the given identifier.');
@@ -136,6 +137,19 @@ class Callback extends Action implements CsrfAwareActionInterface
             $handleLog($tidRequestPayload);
 
             return $tidRequestPayload;
+        }
+
+        $requestPayloadOrderId = ArrUtils::get($requestPayload, 'num_pedido');
+
+        if (!$requestPayloadOrderId) {
+            $requestPayloadOrderId = ArrUtils::get($requestPayload, 'attributes.order_id');
+        }
+
+        if ($requestPayloadOrderId) {
+            $orderIdRequestPayload = ['order_id' => $requestPayloadOrderId ];
+            $handleLog($orderIdRequestPayload);
+
+            return $orderIdRequestPayload;
         }
 
         $requestPayloadId = ArrUtils::get($requestPayload, 'id');

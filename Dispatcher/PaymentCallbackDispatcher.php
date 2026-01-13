@@ -4,14 +4,6 @@ namespace Ipag\Payment\Dispatcher;
 
 use Ipag\Payment\Model\Support\ArrUtils;
 
-//@NOTE: visualizar chat: Adicionar campo VAT no checkout...
-
-// PaymentCallbackHandlerInterface
-
-// PaymentApprovedCallbackHandler
-// PaymentDeclinedCallbackHandler
-// PaymentRefundCallbackHandler
-
 class PaymentCallbackDispatcher
 {
     private array $handlers;
@@ -26,9 +18,13 @@ class PaymentCallbackDispatcher
     public function dispatch($callbackPayload, $order)
     {
         $paymentStatus = ArrUtils::get($callbackPayload, 'payment.status');
-        var_dump(count($this->handlers)); //3
-        //TODO: posso usar numeros no di = [5,8,3], mas ver como fazer com multplos valores: ['3','7']
-        die;
 
+        foreach ($this->handlers as $handler) {
+            if ($handler->isStatusApplicable($paymentStatus)) {
+                $this->logger->info('Dispatching to handler', ['handler' => get_class($handler), 'status' => $paymentStatus]);
+                $handler->handle($callbackPayload, $order);
+                return;
+            }
+        }
     }
 }

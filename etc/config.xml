@@ -39,7 +39,7 @@
                 <active>1</active>
                 <order_status>pending</order_status>
                 <title>Cartão de Crédito</title>
-                <cctypes>amex,visa,mastercard,diners,discover,jcb,elo,hipercard</cctypes>
+                <cctypes>amex,visa,mastercard,diners,discover,jcb,elo</cctypes>
                 <useccv>1</useccv>
                 <cctypes_ipag_mapper><![CDATA[{"american-express":"AE","discover":"DI","jcb":"JCB","mastercard":"MC","master-card":"MC","visa":"VI","maestro":"MI","diners-club":"DN","unionpay":"CUP"}]]></cctypes_ipag_mapper>
                 <installment>

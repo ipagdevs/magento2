@@ -24,7 +24,7 @@ class CcType extends \Magento\Payment\Model\Source\Cctype
      */
     public function getAllowedTypes()
     {
-        return ['visa', 'mastercard', 'amex', 'diners', 'jcb', 'discover', 'elo', 'hipercard'];
+        return ['visa', 'mastercard', 'amex', 'diners', 'jcb', 'discover', 'elo'];
     }
 
     /**

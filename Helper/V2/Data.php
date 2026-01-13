@@ -271,4 +271,16 @@ final class Data extends AbstractData
         return $translatedData;
     }
 
+    public function getProviderTransactionByOrderId($order_id)
+    {
+        $client = $this->AuthorizationValidate();
+
+        $responsePayment = $client->payment()->getByOrderId($order_id);
+
+        $data = $responsePayment->getData();
+
+        $translatedData = PaymentResponseMapper::translateToV1($data);
+
+        return $translatedData;
+    }
 }

@@ -33,8 +33,5 @@
         <type id="elo" order="60">
             <label>Elo</label>
         </type>
-        <type id="hipercard" order="70">
-            <label>HiperCard</label>
-        </type>
     </credit_cards>
 </payment>

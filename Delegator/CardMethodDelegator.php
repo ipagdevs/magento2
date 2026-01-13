@@ -189,9 +189,7 @@ class CardMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \M
         }
 
         $version = $this->scopeConfig->getValue('payment/ipagbase/apiVersion', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
         $ccMethod = $this->ccFactory->createForVersion($version);
-
         $helperData = $this->helperFactory->createForVersion($version);
 
         $this->delegate = $ccMethod;

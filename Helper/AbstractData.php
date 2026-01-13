@@ -3,6 +3,7 @@
 namespace Ipag\Payment\Helper;
 
 use Ipag\Payment\Model\Support\ArrUtils;
+use Ipag\Payment\Exception\IpagPaymentException;
 
 abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -117,6 +118,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     abstract public function getSDKProviderPackageName();
     abstract public function getProviderTransactionById($id);
     abstract public function getProviderTransactionByTid($tid);
+    abstract public function getProviderTransactionByOrderId($order_id);
 
     public function getCustomerDataFromOrder($order)
     {
@@ -246,6 +248,9 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $type_cpf = $this->getTypeForCpf();
 
+        $attribute_cpf_address = $this->getCpfAttributeForAddress();
+        $_taxvat = $quote->getBillingAddress()->getData($attribute_cpf_address);
+
         if ($type_cpf === "customer") {
             $attribute_cpf_customer = $this->getCpfAttributeForCustomer();
             $_taxvat = $quote->getData('customer_' . $attribute_cpf_customer);
@@ -254,9 +259,6 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
                     $_taxvat = $customerData[$attribute_cpf_customer];
                 }
             }
-        } else {
-            $attribute_cpf_address = $this->getCpfAttributeForAddress();
-            $_taxvat = $quote->getBillingAddress()->getData($attribute_cpf_address);
         }
 
         $taxvat = preg_replace("/[^0-9]/", "", (string) $_taxvat);
@@ -660,8 +662,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function buildCallbackUrl()
     {
-        // return $this->getStoreUrl() . 'ipag/notification/Callback';
-        return 'https://ipag-magento2.requestcatcher.com/callback'; //TODO: voltar para a linha de cima
+        return $this->getStoreUrl() . 'ipag/notification/Callback';
     }
 
     public function buildRedirectUrl($payload = [])
@@ -786,7 +787,7 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $order->addStatusHistoryComment(
-            __('iPag %1: status: %2, message: %3.', $callback ? 'callback' : 'response', $status, $comment)
+            __('iPag %1 received. Order status: %2. Message response: %3.', $callback ? 'callback' : 'response', $status, $comment)
         )->setIsCustomerNotified(false);
 
         $order->save();
@@ -819,8 +820,23 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
             return $this->getProviderTransactionById($id);
         } elseif ($tid = ArrUtils::get($identifier, 'tid')) {
             return $this->getProviderTransactionByTid($tid);
+        } elseif ($order_id = ArrUtils::get($identifier, 'order_id')) {
+            return $this->getProviderTransactionByOrderId($order_id);
         }
 
         return null;
+    }
+
+    public function validateSDKExists()
+    {
+        if (!class_exists($this->getSDKProviderClassName())) {
+            throw new IpagPaymentException(
+                \sprintf(
+                    'iPag SDK (%s) is not installed or autoloadable. Please run: `composer require %s`.',
+                    $this->getSDKProviderPackageName(),
+                    $this->getSDKProviderPackageName()
+                )
+            );
+        }
     }
 }

@@ -184,4 +184,19 @@ final class Data extends AbstractData
 
         return $json;
     }
+
+    public function getProviderTransactionByOrderId($order_id)
+    {
+        $ipag = $this->AuthorizationValidate();
+
+        $response = $ipag->transaction()->setNumPedido($order_id)->consult();
+
+        $json = json_decode(json_encode($response), true);
+
+        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
+            throw new IpagPaymentException($json['errorMessage']);
+        }
+
+        return $json;
+    }
 }
