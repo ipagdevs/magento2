@@ -4,9 +4,10 @@
         <payment>
             <ipagbase>
                 <title>Config Ipag</title>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>Ipag\Payment\Delegator\CardMethodDelegator</model>
                 <environment_mode>production</environment_mode>
                 <show_logo>1</show_logo>
+                <apiVersion>v2</apiVersion>
                 <order_status>
                     <authorized>processing</authorized>
                     <approved>processing</approved>
@@ -33,12 +34,12 @@
                 </advanced>
             </ipagbase>
             <ipagcc>
-                <model>Ipag\Payment\Model\Method\Cc</model>
+                <model>Ipag\Payment\Delegator\CardMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>
                 <title>Cartão de Crédito</title>
-                <cctypes>amex,visa,mastercard,diners,discover,jcb,elo,hipercard</cctypes>
+                <cctypes>amex,visa,mastercard,diners,discover,jcb,elo</cctypes>
                 <useccv>1</useccv>
                 <cctypes_ipag_mapper><![CDATA[{"american-express":"AE","discover":"DI","jcb":"JCB","mastercard":"MC","master-card":"MC","visa":"VI","maestro":"MI","diners-club":"DN","unionpay":"CUP"}]]></cctypes_ipag_mapper>
                 <installment>
@@ -54,7 +55,7 @@
                 <mp_token></mp_token>
             </ipagcc>
             <ipagboleto>
-                <model>Ipag\Payment\Model\Method\Boleto</model>
+                <model>Ipag\Payment\Delegator\BoletoMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>
@@ -70,7 +71,7 @@
                 </installment>
             </ipagboleto>
             <ipagpix>
-                <model>Ipag\Payment\Model\Method\Pix</model>
+                <model>Ipag\Payment\Delegator\PixMethodDelegator</model>
                 <payment_action>authorize</payment_action>
                 <active>1</active>
                 <order_status>pending</order_status>

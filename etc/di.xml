@@ -14,4 +14,58 @@
             </argument>
         </arguments>
     </type>
+    <type name="Ipag\Payment\Factory\HelperFactory">
+        <arguments>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Helper\DataFactory</argument>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Helper\V2\DataFactory</argument>
+        </arguments>
+    </type>
+    <type name="Ipag\Payment\Factory\CcFactory">
+        <arguments>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Model\Method\V2\CcFactory</argument>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\CcFactory</argument>
+        </arguments>
+    </type>
+    <type name="Ipag\Payment\Factory\PixFactory">
+        <arguments>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Model\Method\V2\PixFactory</argument>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\PixFactory</argument>
+        </arguments>
+    </type>
+    <type name="Ipag\Payment\Factory\BoletoFactory">
+        <arguments>
+            <argument name="v2Factory" xsi:type="object">Ipag\Payment\Model\Method\V2\BoletoFactory</argument>
+            <argument name="v1Factory" xsi:type="object">Ipag\Payment\Model\Method\BoletoFactory</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="Ipag\Payment\Logger\CallbackLogger" type="Ipag\Payment\Logger\Logger">
+        <arguments>
+            <argument name="filename" xsi:type="string">ipag-callback-logs.log</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Ipag\Payment\Controller\Notification\Callback">
+        <arguments>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="Ipag\Payment\Dispatcher\PaymentCallbackDispatcher">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="approved" xsi:type="object">Ipag\Payment\Handler\PaymentApprovedCallbackHandler</item>
+                <item name="declined" xsi:type="object">Ipag\Payment\Handler\PaymentDeclinedCallbackHandler</item>
+                <item name="refunded" xsi:type="object">Ipag\Payment\Handler\PaymentRefundCallbackHandler</item>
+            </argument>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+        </arguments>
+    </type>
+    <type name="Ipag\Payment\Handler\AbstractPaymentCallbackHandler">
+        <arguments>
+            <argument name="logger" xsi:type="object">Ipag\Payment\Logger\CallbackLogger</argument>
+            <argument name="invoiceService" xsi:type="object">Magento\Sales\Model\Service\InvoiceService</argument>
+        </arguments>
+    </type>
+    <!-- Note: helper provider is injected into the switcher; individual method classes do not require it here -->
 </config>

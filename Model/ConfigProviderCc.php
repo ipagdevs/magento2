@@ -2,13 +2,13 @@
 
 namespace Ipag\Payment\Model;
 
-use Magento\Checkout\Model\ConfigProviderInterface;
-use Magento\Customer\Model\Session;
 use Magento\Framework\Escaper;
-use Magento\Framework\Locale\Bundle\DataBundle;
-use Magento\Framework\View\Asset\Source;
-use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Customer\Model\Session;
 use Magento\Payment\Model\CcConfig;
+use Magento\Framework\View\Asset\Source;
+use Magento\Framework\Locale\Bundle\DataBundle;
+use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Checkout\Model\ConfigProviderInterface;
 
 class ConfigProviderCc implements ConfigProviderInterface
 {
@@ -28,7 +28,6 @@ class ConfigProviderCc implements ConfigProviderInterface
         'mastercard' => 'Mastercard',
         'diners'     => 'Diners',
         'elo'        => 'Elo',
-        'hipercard'  => 'Hipercard',
         'jcb'        => 'JCB',
         'amex'       => 'American Express',
         'discover'   => 'Discover',

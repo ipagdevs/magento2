@@ -1,11 +1,15 @@
 <?php if($block->getMethodCode() === "ipagboleto"):
+
 $url = "";
+$digitableLine = "";
+
 if (!empty($block->getInfo('urlAuthentication'))) {
     $url = $block->getInfo('urlAuthentication');
+	$digitableLine = $block->getInfo('digitableLine');
 }
 else {
-    if (!empty($block->getInfo('attributes.links.payment'))) {
-        $url = $block->getInfo('attributes.links.payment');
+    if (!empty($block->getInfo('links.payment'))) {
+        $url = $block->getInfo('links.payment');
     }
 }
 ?>
@@ -13,12 +17,21 @@ else {
 		<a href="<?php echo $url; ?>" target="_blank" class="action primary btn-boleto boleto-ipag">
 			<span><?php echo __('Imprimir Boleto') ?></span>
 		</a>
+
+		<?php if (!empty($digitableLine)) : ?>
+			<button type="button" id="button-copy" class="action primary btn-boleto boleto-ipag"
+				data-digitableLine="<?php echo $digitableLine; ?>"
+				onclick="window.navigator.clipboard.writeText(this.getAttribute('data-digitableLine')) && alert('Código de barras copiado para a área de transferência');"
+			>
+				<span>Copiar código de barras</span>
+			</button>
+		<?php endif; ?>
 	</p>
 <?php endif; ?>
-<?php if($block->getMethodCode() === "ipagpix") : 
+<?php if($block->getMethodCode() === "ipagpix") :
 	$qrCode = $block->getInfo('pix.qrCode');
 	$qrHelper = $block->getQrHelper($qrCode);
-	$transUuid = md5($block->getInfo('id'));
+	$transUuid = md5($block->getInfo('id') ?: '');
 
 	if (!empty($qrHelper)) : ?>
 		<div id="qr-info" class="col-md-6">
@@ -27,7 +40,7 @@ else {
 					<div class="text-center m-4">
 						<h3>Use o QR Code do Pix para pagar</h3>
 						<p>Abra o app em que vai fazer o pagamento, escaneie a imagem ou cole o código do QR Code</p>
-							<img class='rounded mw-100' src='<?php echo $qrHelper?> '/>
+							<img class='rounded' src='<?php echo $qrHelper?> ' style="width: 100%; max-width: 200px;" />
 						<h3><?php echo $block->getGrandTotalFormatted(); ?></h3>
 						<button type="button" id="button-copy" class="action primary btn-pix boleto-ipag">Copiar código do QR Code</button>
 						<input type="hidden" id="brCode" value="<?php echo $qrCode; ?>">
@@ -85,11 +98,14 @@ else {
 			const socket = io("wss://websocket.ipag.com.br");
 			const token = "<?= $transUuid ?>";
 
-			socket.on(token, function(data) {
-				if (data.status == 200) {
-					renderIpagSuccessPayment();
-				}
-			});
+			if (token) {
+				socket.on(token, function(data) {
+					if (data.status == 200) {
+						renderIpagSuccessPayment();
+					}
+				});
+			}
+
 		</script>
 	<?php else : ?>
 		<p>Ocorreu um erro ao gerar o QR Code, por favor entre em contato com o lojista.</p>

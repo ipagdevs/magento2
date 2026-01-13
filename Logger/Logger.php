@@ -2,18 +2,21 @@
 
 namespace Ipag\Payment\Logger;
 
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger as Monologger;
+use Monolog\Handler\StreamHandler;
 
 class Logger extends Monologger
 {
-    protected $logger;
+    private const FILENAME = 'ipag-payment-logs.log';
+    private const LOG_DIR = '/var/log/ipag/';
 
-    public function __construct()
+    public function __construct($filename = '', $logDir = '')
     {
-        $logger = new Monologger('ipag');
-        $logger->pushHandler(new StreamHandler(BP.'/var/log/ipag/ipag-'.date('Y-m-d').'.log', Monologger::INFO));
-        $this->logger = $logger;
+        $logDir = $logDir ?: self::LOG_DIR;
+        $filename = $filename ?: self::FILENAME;
+        $handler = new StreamHandler(BP . $logDir . $filename, Monologger::INFO);
+
+        parent::__construct('ipag', [$handler]);
     }
 
     public function loginfo($data, $info = '')
@@ -27,9 +30,9 @@ class Logger extends Monologger
         }
         $array = self::array_filter_recursive($json);
         if (is_array($array)) {
-            $this->logger->info($info, $array);
+            $this->info($info, $array);
         } else {
-            $this->logger->info(var_export($array, true), []);
+            $this->info(var_export($array, true), []);
         }
     }
 
@@ -56,7 +59,7 @@ class Logger extends Monologger
                         $public[$name][] = $item;
                     }
                 }
-            } else if (is_object($value)) {
+            } elseif (is_object($value)) {
                 $public[$name] = self::extract_props($value);
             } else {
                 $public[$name] = $value;
@@ -78,15 +81,12 @@ class Logger extends Monologger
     protected function array_filter_recursive($input)
     {
         if (!is_array($input)) {
-            return;
+            return $input;
         }
-        foreach ($input as &$value) {
+        foreach ($input as $key => $value) {
             if (is_array($value)) {
-                $value = self::array_filter_recursive($value);
+                $input[$key] = self::array_filter_recursive($value);
             }
-        }
-        if (is_string($input)) {
-            return array_filter($input, 'strlen');
         }
         return array_filter($input);
     }

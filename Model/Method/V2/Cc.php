@@ -1,11 +1,21 @@
 <?php
-namespace Ipag\Payment\Model\Method;
 
+namespace Ipag\Payment\Model\Method\V2;
+
+use Ipag\Payment\Model\Method\AbstractCc;
 use Ipag\Payment\Model\Support\MaskUtils;
-use Ipag\Payment\Exception\IpagPaymentBoletoException;
+use Ipag\Payment\Exception\IpagPaymentCcException;
+use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
-class Boleto extends AbstractBoleto
+class Cc extends AbstractCc
 {
+    protected $implementationVersion = 'v2';
+
+    public function getImplementationVersion()
+    {
+        return $this->implementationVersion;
+    }
+
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
         return parent::postRequest($request, $config);
@@ -31,17 +41,23 @@ class Boleto extends AbstractBoleto
         return parent::isAvailable($quote);
     }
 
-    protected function prepareTransactionPayload($provider, $items, $fingerprint, $deviceFingerprint, $order, $total, $infoInstance)
-    {
-        $installments = 1;
-
+    protected function prepareTransactionPayload(
+        $provider,
+        $orderCard,
+        $items,
+        $fingerprint,
+        $installments,
+        $deviceFingerprint,
+        $order,
+        $total
+    ) {
         $customerOrder = $this->_ipagHelper->getCustomerDataFromOrder($order);
 
         $transactionProducts = $this->_ipagHelper->addProductItemsIpag($provider, $items);
 
         $transactionCustomer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
 
-        $transactionPayment = $this->_ipagHelper->addPayBoletoIpag($provider, $infoInstance);
+        $transactionPayment = $this->_ipagHelper->addPayCcIpag($provider, $orderCard);
 
         $transactionOrder = $this->_ipagHelper->createOrderIpag(
             $order,
@@ -60,22 +76,32 @@ class Boleto extends AbstractBoleto
 
     protected function execTransaction($provider, $payload)
     {
-        $maskedPayload = MaskUtils::applyMaskRecursive($payload->serialize());
+        $maskedPayload = MaskUtils::applyMaskRecursive($payload->jsonSerialize());
 
         $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
 
-        $response = $provider->transaction()->setOrder($payload)->execute();
+        try {
 
-        $json = json_decode(json_encode($response), true);
+            $responsePayment = $provider->payment()->create($payload);
 
-        $maskedResponseData = MaskUtils::applyMaskRecursive($json);
+            $data = $responsePayment->getData();
 
-        $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
+            $translatedData = PaymentResponseMapper::translateToV1($data);
 
-        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentBoletoException($json['errorMessage']);
+            $maskedResponseData = MaskUtils::applyMaskRecursive($translatedData);
+
+            $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
+
+            return $maskedResponseData;
+
+        } catch (\Throwable $th) {
+            throw new IpagPaymentCcException("Error executing Cc transaction: " . $th->getMessage(), 0, $th);
         }
 
-        return $json;
+    }
+
+    protected function execCapture($provider, $tid, $amount = null)
+    {
+        //TODO: Implement capture for v2 API
     }
 }

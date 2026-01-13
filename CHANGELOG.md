@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.0 - 2026-01-13
+- Adiciona suporte do módulo para o iPag SDK V2.
+
 ## v1.7.0 - 2025-12-15
 - Adiciona novo fluxo de redirecionamento de autenticação de pgamento.
 

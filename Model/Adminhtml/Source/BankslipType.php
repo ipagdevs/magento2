@@ -18,7 +18,7 @@ class BankslipType extends \Magento\Payment\Model\Source\Cctype
      */
     public function getAllowedTypes()
     {
-        return ['boletoitaushopline', 'boleto_banespasantander', 'boletosicredi', 'boletosicoob', 'boletozoop', 'boletopagseguro', 'boletoshopfacil', 'boletobradesconet', 'boletobb', 'boletosimulado'];
+        return ['boleto', 'boletoitaushopline', 'boleto_banespasantander', 'boletosicredi', 'boletosicoob', 'boletozoop', 'boletopagseguro', 'boletoshopfacil', 'boletobradesconet', 'boletobb', 'boletosimulado'];
     }
     /**
      * Returns bankslip types
@@ -28,6 +28,7 @@ class BankslipType extends \Magento\Payment\Model\Source\Cctype
     public function getBankslipTypeLabelMap()
     {
         return [
+            'boleto'                  => 'Select automatically from your iPag account',
             'boletoitaushopline'      => 'Itaú Shopline',
             'boleto_banespasantander' => 'Banco Santander',
             'boletosicredi'           => 'Banco Sicredi',
@@ -48,6 +49,8 @@ class BankslipType extends \Magento\Payment\Model\Source\Cctype
     {
         $allowed = $this->getAllowedTypes();
         $options = [];
+
+        // throw new \Exception('Deprecated class Ipag\Payment\Model\Adminhtml\Source\BankslipType used.');
 
         foreach ($this->getBankslipTypeLabelMap() as $code => $name) {
             if (in_array($code, $allowed)) {

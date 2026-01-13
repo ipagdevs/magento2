@@ -1,11 +1,21 @@
 <?php
-namespace Ipag\Payment\Model\Method;
+
+namespace Ipag\Payment\Model\Method\V2;
 
 use Ipag\Payment\Model\Support\MaskUtils;
-use Ipag\Payment\Exception\IpagPaymentBoletoException;
+use Ipag\Payment\Model\Method\AbstractPix;
+use Ipag\Payment\Exception\IpagPaymentPixException;
+use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
-class Boleto extends AbstractBoleto
+class Pix extends AbstractPix
 {
+    protected $implementationVersion = 'v2';
+
+    public function getImplementationVersion()
+    {
+        return $this->implementationVersion;
+    }
+
     public function postRequest(\Magento\Framework\DataObject $request, \Magento\Payment\Model\Method\ConfigInterface $config)
     {
         return parent::postRequest($request, $config);
@@ -41,7 +51,7 @@ class Boleto extends AbstractBoleto
 
         $transactionCustomer = $this->_ipagHelper->generateCustomerIpag($provider, $customerOrder);
 
-        $transactionPayment = $this->_ipagHelper->addPayBoletoIpag($provider, $infoInstance);
+        $transactionPayment = $this->_ipagHelper->addPayPixIpag($provider, $infoInstance);
 
         $transactionOrder = $this->_ipagHelper->createOrderIpag(
             $order,
@@ -60,22 +70,24 @@ class Boleto extends AbstractBoleto
 
     protected function execTransaction($provider, $payload)
     {
-        $maskedPayload = MaskUtils::applyMaskRecursive($payload->serialize());
+        $maskedPayload = MaskUtils::applyMaskRecursive($payload->jsonSerialize());
 
         $this->logger->loginfo($maskedPayload, self::class . ' REQUEST');
 
-        $response = $provider->transaction()->setOrder($payload)->execute();
+        try {
+            $responsePayment = $provider->payment()->create($payload);
 
-        $json = json_decode(json_encode($response), true);
+            $data = $responsePayment->getData();
 
-        $maskedResponseData = MaskUtils::applyMaskRecursive($json);
+            $translatedData = PaymentResponseMapper::translateToV1($data);
 
-        $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
+            $maskedResponseData = MaskUtils::applyMaskRecursive($translatedData);
 
-        if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentBoletoException($json['errorMessage']);
+            $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
+
+            return $maskedResponseData;
+        } catch (\Throwable $th) {
+            throw new IpagPaymentPixException('Error executing Pix transaction', 0, $th);
         }
-
-        return $json;
     }
 }
