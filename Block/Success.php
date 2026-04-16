@@ -5,6 +5,9 @@
  */
 namespace Ipag\Payment\Block;
 
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Magento\Customer\Model\Context;
 use Magento\Sales\Model\Order;
 use Endroid\QrCode\QrCode;
@@ -53,22 +56,16 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
 
     public function getQrHelper($pix)
     {
-        $response = null;
-        
-        if (!empty($pix)) {
-            if (method_exists(QrCode::class, 'create')) {
-                $qr = QrCode::create($pix);
-                $writer = new PngWriter();
-                $result = $writer->write($qr);
-            
-                $response = $result->getDataUri();
-            } else {
-                $qrCode = new QrCode($pix);
-                $qrCode->setSize(200);
-                $response = $qrCode->writeDataUri();
-            }
+        if (empty($pix)) {
+            return null;
         }
-        return $response;
+
+        $dataUri = $this->buildQrWithModernApi($pix);
+        if ($dataUri !== null) {
+            return $dataUri;
+        }
+
+        return $this->buildQrWithLegacyApi($pix);
     }
 
     /**
@@ -102,5 +99,53 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
     public function getOrderStatus()
     {
         return $order = $this->getOrder()->getStatus();
+    }
+
+    private function buildQrWithModernApi(string $data): ?string
+    {
+        try {
+
+            $builder = new Builder(
+                data: $data,
+                encoding: new Encoding('UTF-8'),
+            );
+
+            $result = $builder->build();
+
+            $dataUri = $result->getDataUri();
+
+            if (empty($dataUri)) {
+                throw new \RuntimeException('Generated QR code is empty.');
+            }
+
+            return $dataUri;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function buildQrWithLegacyApi(string $pix): ?string
+    {
+        $response = null;
+
+        try {
+            if (!empty($pix)) {
+                if (method_exists(QrCode::class, 'create')) {
+                    $qr = QrCode::create($pix);
+                    $writer = new PngWriter();
+                    $result = $writer->write($qr);
+
+                    $response = $result->getDataUri();
+                } else {
+                    $qrCode = new QrCode($pix);
+                    $qrCode->setSize(200);
+                    $response = $qrCode->writeDataUri();
+                }
+            }
+        } catch (\Throwable $e) {
+            //
+        }
+
+        return $response;
     }
 }
