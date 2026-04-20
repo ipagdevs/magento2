@@ -9,8 +9,14 @@
 	$deniedStatuses = ['3', '7'];
 
 	$paymentStatus = $block->getInfo('payment.status');
+	$isCardMethod = $block->getMethodCode() === 'ipagcc';
 
-	if (in_array($paymentStatus, $analysesStatuses) && $block->getMethodCode() == 'ipagcc') {
+	if (in_array($paymentStatus, $deniedStatuses, true) && $isCardMethod) {
+		header('Location: ' . $block->getCheckoutFailureUrl($block->getCardFailureMessage()));
+		exit;
+	}
+
+	if (in_array($paymentStatus, $analysesStatuses, true) && $isCardMethod) {
 		header('Location: ' . $block->getInfo('urlAuthentication'));
 		exit;
 	}
@@ -26,10 +32,7 @@
 			<p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $block->getOrderId()), ['span']) ?></p>
 		<?php endif; ?>
 
-		<?php if (in_array($paymentStatus, $deniedStatuses) && $block->getMethodCode() == 'ipagcc') : ?>
-			<p><?= $block->escapeHtml(__('Seu cartão não pode ser processado, entre em contato com sua operadora.'))
-				?></p>
-		<?php elseif (in_array($paymentStatus, $analysesStatuses) && $block->getMethodCode() == 'ipagcc') : ?>
+		<?php if (in_array($paymentStatus, $analysesStatuses, true) && $isCardMethod) : ?>
 			<p><?= $block->escapeHtml(__('Your payment is under review, please continue the process by clicking the link below.')) ?></p>
 		<?php else : ?>
 			<p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
