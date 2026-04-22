@@ -101,6 +101,28 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
         return $order = $this->getOrder()->getStatus();
     }
 
+    public function getCheckoutFailureUrl($message = null)
+    {
+        $order = $this->getOrder();
+
+        if ($order && $order->getId()) {
+            $this->_checkoutSession->setLastQuoteId($order->getQuoteId());
+            $this->_checkoutSession->setLastOrderId($order->getId());
+            $this->_checkoutSession->setLastRealOrderId($order->getIncrementId());
+        }
+
+        if ($message !== null) {
+            $this->_checkoutSession->setErrorMessage($message);
+        }
+
+        return $this->getUrl('checkout/onepage/failure');
+    }
+
+    public function getCardFailureMessage()
+    {
+        return (string) __('Seu cartão não pode ser processado, entre em contato com sua operadora.');
+    }
+
     private function buildQrWithModernApi(string $data): ?string
     {
         try {

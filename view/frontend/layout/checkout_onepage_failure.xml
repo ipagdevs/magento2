@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Ipag_Payment::css/checkout_success.css"/>
+    </head>
+    <body>
+        <referenceBlock name="page.main.title">
+            <action method="setPageTitle">
+                <argument translate="true" name="title" xsi:type="string">Pagamento não processado</argument>
+            </action>
+        </referenceBlock>
+        <referenceBlock name="checkout.failure" template="Ipag_Payment::order/failure.phtml">
+            <block class="Ipag\Payment\Block\Failure"
+                   name="ipag.order.failure"
+                   as="ipag_order_failure"
+                   template="Ipag_Payment::order/failure/additional.phtml"/>
+        </referenceBlock>
+    </body>
+</page>

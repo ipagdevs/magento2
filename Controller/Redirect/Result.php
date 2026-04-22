@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Controller\Redirect;
 
+use Ipag\Payment\Factory\HelperFactory;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
@@ -19,7 +21,7 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
 {
     protected $_logger;
 
-    protected $_ipagHelper;
+    protected $helperFactory;
 
     protected $_ipagBoletoModel;
 
@@ -49,6 +51,8 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
 
     protected $resultPageFactory;
 
+    protected $checkoutSession;
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Psr\Log\LoggerInterface $logger,
@@ -60,13 +64,14 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Sales\Model\Order\Email\Sender\InvoiceSender $invoiceSender,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Ipag\Payment\Helper\Data $ipagHelper,
+        HelperFactory $helperFactory,
         \Ipag\Payment\Logger\Logger $ipagLogger,
         \Ipag\Payment\Model\Method\Boleto $ipagBoletoModel,
         \Ipag\Payment\Model\IpagInvoiceInstallments $ipagInvoiceInstallments,
         \Magento\Framework\DB\TransactionFactory $transactionFactory,
         PageFactory $resultPageFactory,
-        EncryptorInterface $encryptor
+        EncryptorInterface $encryptor,
+        CheckoutSession $checkoutSession
     )
     {
         $this->_invoiceService = $invoiceService;
@@ -77,13 +82,14 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
         $this->scopeConfig = $scopeConfig;
         $this->ipagOrderStatus = $ipagOrderStatus;
         $this->invoiceSender = $invoiceSender;
-        $this->_ipagHelper = $ipagHelper;
+        $this->helperFactory = $helperFactory;
         $this->_ipagBoletoModel = $ipagBoletoModel;
         $this->_ipagInvoiceInstallments = $ipagInvoiceInstallments;
         $this->productMetadata = $productMetadata;
         $this->transactionFactory = $transactionFactory;
         $this->ipagLogger = $ipagLogger;
         $this->encryptor = $encryptor;
+        $this->checkoutSession = $checkoutSession;
         $this->resultPageFactory = $resultPageFactory;
 
         parent::__construct($context);
@@ -136,20 +142,35 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
                 $this->thrownLocalizedException('Missing transaction_id parameter in redirect request', ['order' => $orderId]);
             }
 
-            $ipag = $this->_ipagHelper->AuthorizationValidate();
+            $ipagHelper = $this->getPaymentHelper((int) $order->getStoreId());
 
-            $response = $ipag->transaction()->setNumPedido($orderId)->consult();
+            $response = $ipagHelper->getProviderTransactionByOrderId($orderId);
 
-            if (isset($response->error)) {
-                $this->thrownLocalizedException('iPag returned an error for order consult', ['order' => $orderId, 'error' => $response->error, 'message' => $response->errorMessage]);
+            if (!is_array($response)) {
+                $this->thrownLocalizedException('Invalid provider response for order consult', ['order' => $orderId]);
             }
 
-            if (!isset($response->order->orderId) || $response->order->orderId != $orderId) {
-                $this->thrownLocalizedException('iPag returned invalid order data for order consult', ['order' => $orderId, 'response_order_id' => $response->order->orderId ?? null]);
+            if (isset($response['error'])) {
+                $this->thrownLocalizedException('iPag returned an error for order consult', ['order' => $orderId, 'error' => $response['error'], 'message' => $response['errorMessage'] ?? null]);
             }
 
-            if (isset($response->payment->status) && in_array($response->payment->status, ['5', '8'])) {
+            $responseOrderId = $response['order']['orderId'] ?? null;
+
+            if ($responseOrderId != $orderId) {
+                $this->thrownLocalizedException('iPag returned invalid order data for order consult', ['order' => $orderId, 'response_order_id' => $responseOrderId]);
+            }
+
+            $paymentStatus = isset($response['payment']['status']) ? (string) $response['payment']['status'] : null;
+            $paymentMethod = $order->getPayment() ? $order->getPayment()->getMethod() : null;
+
+            $this->_logger->debug('Resolved redirect payment status', ['order' => $orderId, 'payment_status' => $paymentStatus, 'payment_method' => $paymentMethod]);
+
+            if ($paymentStatus !== null && in_array($paymentStatus, ['5', '8'], true)) {
                 return $this->redirectToResultSuccess();
+            }
+
+            if ($paymentMethod === 'ipagcc' && $paymentStatus !== null && in_array($paymentStatus, ['3', '7'], true)) {
+                return $this->redirectToCheckoutFailure($order);
             }
 
             return $this->redirectToResultError();
@@ -218,6 +239,35 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
         $resultPage->addHandle('ipag_redirect_error');
         $this->_logger->debug('Returning ipag redirect error page', ['handle' => 'ipag_redirect_error']);
         return $resultPage;
+    }
+
+    private function redirectToCheckoutFailure($order)
+    {
+        if ($order && $order->getId()) {
+            $this->checkoutSession->setLastQuoteId($order->getQuoteId());
+            $this->checkoutSession->setLastOrderId($order->getEntityId());
+            $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        }
+
+        $this->checkoutSession->setErrorMessage(__('Seu cartão não pode ser processado, entre em contato com sua operadora.'));
+
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $resultRedirect->setPath('checkout/onepage/failure');
+
+        $this->_logger->debug('Redirecting denied credit card payment to checkout failure page', ['path' => 'checkout/onepage/failure']);
+
+        return $resultRedirect;
+    }
+
+    private function getPaymentHelper($storeId = null)
+    {
+        $version = $this->scopeConfig->getValue(
+            'payment/ipagbase/apiVersion',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        return $this->helperFactory->createForVersion($version ?: 'v1');
     }
 
     private function redirectToHome()
