@@ -4,6 +4,6 @@
 
 <?php if ($methodCode === 'ipagcc') : ?>
     <p><?= $block->escapeHtml(__('Verifique com a operadora do cartão se existe alguma restrição antes de tentar novamente.')) ?></p>
-<?php elseif (in_array($methodCode, ['ipagboleto', 'ipagpix'], true)) : ?>
+<?php elseif (in_array($methodCode, ['ipagboleto', 'ipagpix'])) : ?>
     <p><?= $block->escapeHtml(__('Tente realizar um novo pedido para gerar novamente o pagamento.')) ?></p>
 <?php endif; ?>

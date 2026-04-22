@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.2 - 2026-04-22
+- Adiciona novo fluxo do método de pagamento cartão.
+
 ## v2.0.1 - 2026-04-16
 - Adiciona suporte para as novas versões do pacote: endroid/qr-code.
 
