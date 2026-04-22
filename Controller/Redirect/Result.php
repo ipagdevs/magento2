@@ -136,12 +136,6 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
                 $this->thrownLocalizedException('Order not found for decoded token', ['order' => $orderId]);
             }
 
-            $transactionId = $this->getRequest()->getParam('transaction_id');
-
-            if (!$transactionId) {
-                $this->thrownLocalizedException('Missing transaction_id parameter in redirect request', ['order' => $orderId]);
-            }
-
             $ipagHelper = $this->getPaymentHelper((int) $order->getStoreId());
 
             $response = $ipagHelper->getProviderTransactionByOrderId($orderId);
@@ -165,11 +159,11 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
 
             $this->_logger->debug('Resolved redirect payment status', ['order' => $orderId, 'payment_status' => $paymentStatus, 'payment_method' => $paymentMethod]);
 
-            if ($paymentStatus !== null && in_array($paymentStatus, ['5', '8'], true)) {
+            if ($paymentStatus !== null && in_array($paymentStatus, ['5', '8'])) {
                 return $this->redirectToResultSuccess();
             }
 
-            if ($paymentMethod === 'ipagcc' && $paymentStatus !== null && in_array($paymentStatus, ['3', '7'], true)) {
+            if ($paymentMethod === 'ipagcc' && $paymentStatus !== null && in_array($paymentStatus, ['3', '7'])) {
                 return $this->redirectToCheckoutFailure($order);
             }
 
