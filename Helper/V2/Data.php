@@ -9,6 +9,10 @@ use Ipag\Payment\Model\Support\PaymentResponseMapper;
 
 final class Data extends AbstractData
 {
+    private const PRODUCT_SKU_MAX_LENGTH = 50;
+    private const PRODUCT_NAME_MAX_LENGTH = 100;
+    private const PRODUCT_DESCRIPTION_MAX_LENGTH = 255;
+
     protected $implementationVersion = 'v2';
     public function getImplementationVersion()
     {
@@ -84,17 +88,37 @@ final class Data extends AbstractData
             }
 
             $product = new \Ipag\Sdk\Model\Product([
-                'sku' => (string) $item->getSku(),
-                'name' => (string) $item->getName(),
+                'sku' => $this->truncateProductField($item->getSku(), self::PRODUCT_SKU_MAX_LENGTH),
+                'name' => $this->truncateProductField($item->getName(), self::PRODUCT_NAME_MAX_LENGTH),
                 'quantity' => (int) $item->getQty(),
                 'unit_price' => (float) $item->getPrice(),
-                'description' => (string) $item->getDescription()
+                'description' => $this->truncateProductField(
+                    $item->getDescription(),
+                    self::PRODUCT_DESCRIPTION_MAX_LENGTH
+                )
             ]);
 
             $cart[] = $product;
         }
 
         return $cart;
+    }
+
+    /**
+     * Corta o valor no limite de caracteres aceito pela API do iPag.
+     *
+     * O SDK v2 não aplica limite nesses campos, então o valor cru chegaria à API
+     * e a transação seria rejeitada na validação. Usa mb_substr porque a API
+     * conta caracteres, não bytes — substr partiria um caractere multibyte no
+     * meio e geraria UTF-8 inválido no payload.
+     *
+     * @param string|null $value
+     * @param int $maxLength
+     * @return string
+     */
+    private function truncateProductField($value, $maxLength)
+    {
+        return mb_substr((string) $value, 0, $maxLength);
     }
 
     public function generateCustomerIpag($ipag, $customerOrder)
