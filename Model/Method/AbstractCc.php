@@ -230,6 +230,20 @@ abstract class AbstractCc extends \Magento\Payment\Model\Method\Cc implements \M
 
         list($status, $message) = $this->_ipagHelper->getStatusFromResponse($transactionResponse);
 
+        if (in_array((int) $status, [3, 7], true)) {
+            if ($order->canCancel()) {
+                $order->cancel();
+            }
+
+            $order->addStatusHistoryComment(
+                __('iPag response received. Payment was declined or canceled. Message response: %1.', $message)
+            )->setIsCustomerNotified(false);
+
+            $order->save();
+
+            return $this;
+        }
+
         $this->_ipagHelper->registerOrderStatusHistory($order, $status, $message);
 
         return $this;
