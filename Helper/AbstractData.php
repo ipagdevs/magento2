@@ -619,6 +619,11 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         return $instrucao1;
     }
 
+    public function getPixExpiresIn()
+    {
+        return $this->_scopeConfig->getValue('payment/ipagpix/expires_in', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    }
+
     public function getImgForBoleto()
     {
         /*logo_boleto*/
