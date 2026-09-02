@@ -13,6 +13,7 @@
 $specificInfo = $block->getSpecificInformation();
 $title = $block->escapeHtml($block->getMethod()->getTitle());
 $pixUrl = $block->getLinkPrintPay();
+$pixExpiresAt = $block->getPixExpiresAtFormatted();
 ?>
 <dl class="payment-method">
     <dt class="title"><?= /* @noEscape */ $title ?></dt>
@@ -29,12 +30,18 @@ $pixUrl = $block->getLinkPrintPay();
                 </tr>
             <?php endforeach; ?>
         <?php endif;?>
+            <?php if ($pixExpiresAt):?>
+                <tr>
+                    <th scope="row"><?= $block->escapeHtml(__('QR Code válido até')) ?></th>
+                    <td><?= $block->escapeHtml($pixExpiresAt) ?></td>
+                </tr>
+            <?php endif;?>
             <?php if ($pixUrl):?>
                 <tr>
                     <th scope="row"><?= $block->escapeHtml('Link')?></th>
                     <td>
                         <a href="<?php echo $pixUrl; ?>" class="btn btn-link" target="_blank">
-                            Visualizar QR Pix
+                            <?= /* @noEscape */ __('Visualizar QR Pix') ?>
                         </a>
                     </td>
                 </tr>

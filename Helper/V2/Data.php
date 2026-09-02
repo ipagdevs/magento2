@@ -263,7 +263,7 @@ final class Data extends AbstractData
         $payment = new \Ipag\Sdk\Model\Payment([
             'type' => \Ipag\Sdk\Core\Enums\PaymentTypes::PIX,
             'method' => \Ipag\Sdk\Core\Enums\Others::PIX,
-            'pix_expires_in' => (int) $this->getPixExpiresIn()
+            'pix_expires_in' => $this->getPixExpiresIn()
         ]);
 
         return $payment;

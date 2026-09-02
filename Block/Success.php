@@ -12,6 +12,7 @@ use Magento\Customer\Model\Context;
 use Magento\Sales\Model\Order;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
+use Ipag\Payment\Model\Support\PixExpirationUtils;
 
 class Success extends \Magento\Checkout\Block\Onepage\Success
 {
@@ -94,6 +95,39 @@ class Success extends \Magento\Checkout\Block\Onepage\Success
         $_info = $this->getPayment()->getInfoInstance()->getAdditionalInformation($info);
 
         return $_info;
+    }
+
+    /**
+     * Data de expiração do QR Code Pix devolvida pela API.
+     *
+     * @return \DateTimeImmutable|null
+     */
+    public function getPixExpiresAt()
+    {
+        return PixExpirationUtils::parse($this->getInfo('pix.expiresAt'));
+    }
+
+    /**
+     * Expiração do QR Code formatada no timezone configurado na loja.
+     *
+     * @return string|null
+     */
+    public function getPixExpiresAtFormatted()
+    {
+        return PixExpirationUtils::formatForStore(
+            $this->getInfo('pix.expiresAt'),
+            $this->_localeDate->getConfigTimezone()
+        );
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPixExpiresAtTimestamp()
+    {
+        $expiresAt = $this->getPixExpiresAt();
+
+        return $expiresAt === null ? null : $expiresAt->getTimestamp();
     }
 
     public function getOrderStatus()

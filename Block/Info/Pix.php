@@ -5,6 +5,8 @@
  */
 namespace Ipag\Payment\Block\Info;
 
+use Ipag\Payment\Model\Support\PixExpirationUtils;
+
 class Pix extends \Magento\Payment\Block\Info
 {
     protected $keys = ['payment.message' => 'Transaction Message'];
@@ -48,6 +50,18 @@ class Pix extends \Magento\Payment\Block\Info
     public function getLinkPrintPay()
     {
         return $this->getLinkPay();
+    }
+
+    /**
+     * Expiração do QR Code formatada no timezone da loja, ou null quando a
+     * transação não trouxe a informação (v1, ou pedido anterior ao recurso).
+     */
+    public function getPixExpiresAtFormatted()
+    {
+        return PixExpirationUtils::formatForStore(
+            $this->getInfo()->getAdditionalInformation('pix.expiresAt'),
+            $this->_localeDate->getConfigTimezone()
+        );
     }
 
     /**
