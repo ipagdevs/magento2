@@ -2,6 +2,8 @@
 
 namespace Ipag\Payment\Delegator;
 
+use Ipag\Payment\Exception\IpagPaymentException;
+
 class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Magento\Payment\Model\Method\Online\GatewayInterface
 {
     const ROUND_UP = 100;
@@ -114,6 +116,9 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
             return $this->delegate->validate();
         } catch (\Throwable $th) {
             $this->logger->error('Pix delegator validate error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            if ($th instanceof IpagPaymentException) {
+                throw new \Magento\Framework\Exception\LocalizedException(__($th->getMessage()));
+            }
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -131,6 +136,9 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
             return $this->delegate->initialize($paymentAction, $stateObject);
         } catch (\Throwable $th) {
             $this->logger->error('Pix delegator initialize error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            if ($th instanceof IpagPaymentException) {
+                throw new \Magento\Framework\Exception\LocalizedException(__($th->getMessage()));
+            }
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment service unavailable. Contact support.'));
         }
     }
@@ -148,6 +156,9 @@ class PixMethodDelegator extends \Magento\Payment\Model\Method\Cc implements \Ma
             return $this->delegate->processPayment($payment);
         } catch (\Throwable $th) {
             $this->logger->error('Pix delegator process payment error: ' . $th->getMessage(), ['exception' => strval($th)]);
+            if ($th instanceof IpagPaymentException) {
+                throw new \Magento\Framework\Exception\LocalizedException(__($th->getMessage()));
+            }
             throw new \Magento\Framework\Exception\LocalizedException(__('Payment failed. Contact support.'));
         }
     }

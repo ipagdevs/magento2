@@ -6,6 +6,8 @@ use Ipag\Payment\Model\Method\AbstractCc;
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Exception\IpagPaymentCcException;
 use Ipag\Payment\Model\Support\PaymentResponseMapper;
+use Ipag\Payment\Model\Support\GatewayErrorUtils;
+use Ipag\Sdk\Exception\HttpClientException;
 
 class Cc extends AbstractCc
 {
@@ -94,8 +96,14 @@ class Cc extends AbstractCc
 
             return $maskedResponseData;
 
+        } catch (HttpClientException $e) {
+            throw new IpagPaymentCcException(
+                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Cc transaction'),
+                0,
+                $e
+            );
         } catch (\Throwable $th) {
-            throw new IpagPaymentCcException("Error executing Cc transaction: " . $th->getMessage(), 0, $th);
+            throw new IpagPaymentCcException('Error executing Cc transaction', 0, $th);
         }
 
     }

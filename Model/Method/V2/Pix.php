@@ -6,6 +6,8 @@ use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Model\Method\AbstractPix;
 use Ipag\Payment\Exception\IpagPaymentPixException;
 use Ipag\Payment\Model\Support\PaymentResponseMapper;
+use Ipag\Payment\Model\Support\GatewayErrorUtils;
+use Ipag\Sdk\Exception\HttpClientException;
 
 class Pix extends AbstractPix
 {
@@ -86,6 +88,12 @@ class Pix extends AbstractPix
             $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
             return $maskedResponseData;
+        } catch (HttpClientException $e) {
+            throw new IpagPaymentPixException(
+                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Pix transaction'),
+                0,
+                $e
+            );
         } catch (\Throwable $th) {
             throw new IpagPaymentPixException('Error executing Pix transaction', 0, $th);
         }

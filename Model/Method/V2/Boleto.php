@@ -5,7 +5,9 @@ namespace Ipag\Payment\Model\Method\V2;
 use Ipag\Payment\Model\Support\MaskUtils;
 use Ipag\Payment\Model\Method\AbstractBoleto;
 use Ipag\Payment\Model\Support\PaymentResponseMapper;
+use Ipag\Payment\Model\Support\GatewayErrorUtils;
 use Ipag\Payment\Exception\IpagPaymentBoletoException;
+use Ipag\Sdk\Exception\HttpClientException;
 
 class Boleto extends AbstractBoleto
 {
@@ -86,6 +88,12 @@ class Boleto extends AbstractBoleto
             $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
             return $maskedResponseData;
+        } catch (HttpClientException $e) {
+            throw new IpagPaymentBoletoException(
+                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Boleto transaction'),
+                0,
+                $e
+            );
         } catch (\Throwable $th) {
             throw new IpagPaymentBoletoException('Error executing Boleto transaction', 0, $th);
         }
