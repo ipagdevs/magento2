@@ -15,8 +15,8 @@ else {
 ?>
 	<?php if (!empty($digitableLine)) : ?>
 		<p style="margin-bottom: 8px;"><strong><?php echo __('Linha digitável') ?></strong></p>
-		<div style="display: inline-flex; align-items: center; max-width: 100%; border: 1px solid #c7c7c7; border-radius: 10px; padding: 12px 10px 12px 18px; margin-bottom: 20px; background: #fff;">
-			<code id="boleto-digitable-code" style="font-family: monospace; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; color: #333; background: transparent; -webkit-user-select: all; -moz-user-select: all; user-select: all;"><?php echo $block->escapeHtml($digitableLine); ?></code>
+		<div style="box-sizing: border-box; display: inline-flex; align-items: center; max-width: 100%; border: 1px solid #c7c7c7; border-radius: 10px; padding: 12px 10px 12px 18px; margin-bottom: 20px; background: #fff;">
+			<code id="boleto-digitable-code" style="flex: 1; min-width: 0; font-family: monospace; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; background: transparent; -webkit-user-select: all; -moz-user-select: all; user-select: all;"><?php echo $block->escapeHtml($digitableLine); ?></code>
 			<button type="button" id="button-copy-digitable-line" title="<?php echo __('Copiar linha digitável') ?>" style="background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; padding: 6px 10px; margin-left: 10px; flex-shrink: 0;">
 				<svg id="boleto-copy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<rect x="9" y="9" width="13" height="13" rx="2"></rect>
@@ -64,38 +64,126 @@ else {
 		<div id="qr-info" class="col-md-6">
 			<div class="card card-default">
 				<div class="card-body">
-					<div class="text-center m-4">
-						<h3>Use o QR Code do Pix para pagar</h3>
-						<p>Abra o app em que vai fazer o pagamento, escaneie a imagem ou cole o código do QR Code</p>
-							<img class='rounded' src='<?php echo $qrHelper?> ' style="width: 100%; max-width: 200px;" />
-						<h3><?php echo $block->getGrandTotalFormatted(); ?></h3>
-						<button type="button" id="button-copy" class="action primary btn-pix boleto-ipag">Copiar código do QR Code</button>
-						<input type="hidden" id="brCode" value="<?php echo $qrCode; ?>">
+					<div class="text-center m-4" style="max-width: 420px;">
+						<h3 style="margin: 0 0 4px; font-size: 1.8rem; line-height: 1.3;">Use o QR Code do Pix para pagar</h3>
+						<p style="margin: 0 0 16px; font-size: 1.3rem; line-height: 1.4; color: #757575;">Abra o app em que vai fazer o pagamento, escaneie a imagem ou cole o código do QR Code</p>
+						<img class='rounded' src='<?php echo $qrHelper?>' style="display: block; width: 100%; max-width: 220px; margin-bottom: 0;" />
+						<p style="margin: 0 0 12px;font-size: 1.3rem;font-weight: 700;line-height: 1.2;width: 100%;max-width: 220px;text-align: center;">Pague <?php echo $block->getGrandTotalFormatted(); ?></p>
+						<div style="box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 420px; padding: 12px 16px; border: 1px solid #c7c7c7; border-radius: 10px; background: #fff; margin-bottom: 12px;">
+							<code id="pix-qrcode-code" style="flex: 1; min-width: 0; font-family: monospace; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; background: transparent; -webkit-user-select: all; -moz-user-select: all; user-select: all;"><?php echo $block->escapeHtml($qrCode); ?></code>
+							<button type="button" id="button-copy" title="<?= $block->escapeHtmlAttr(__('Copiar código do QR Code')) ?>" style="background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; padding: 6px; flex-shrink: 0;">
+								<svg id="pix-copy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<rect x="9" y="9" width="13" height="13" rx="2"></rect>
+									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+								</svg>
+							</button>
+						</div>
+						<?php $pixExpiresAtFormatted = $block->getPixExpiresAtFormatted(); ?>
+						<?php if ($pixExpiresAtFormatted !== null) : ?>
+							<div id="pix-expiration" style="box-sizing: border-box; display: inline-flex; align-items: center; gap: 10px; max-width: 100%; padding: 12px 16px; border: 1px solid #c7c7c7; border-radius: 10px; background: #fff; margin-bottom: 20px; color: #333; text-align: left;">
+								<svg id="pix-expiration-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+									<circle cx="12" cy="12" r="9"></circle>
+									<polyline points="12 7 12 12 15 14"></polyline>
+								</svg>
+								<span>
+									<span style="display: block; font-size: 1.4rem; line-height: 1.2;">
+										<span id="pix-countdown-label"><?= $block->escapeHtml(__('Expira em')) ?></span>
+										<strong id="pix-countdown" style="font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; font-feature-settings: 'tnum';"></strong>
+									</span>
+									<span style="display: block; margin-top: 2px; font-size: 1.3rem; line-height: 1.3; opacity: .75;">
+										<?= $block->escapeHtml(__('QR Code válido até')) ?> <?= $block->escapeHtml($pixExpiresAtFormatted) ?>
+									</span>
+								</span>
+							</div>
+							<script>
+								(function () {
+									var expiresAt = <?= (int) $block->getPixExpiresAtTimestamp() ?> * 1000;
+									var expiredLabel = '<?= $block->escapeJs(__('QR Code expirado')) ?>';
+									var container = document.getElementById('pix-expiration');
+									var countdownElement = document.getElementById('pix-countdown');
+									var labelElement = document.getElementById('pix-countdown-label');
+									var interval;
+
+									if (!container || !countdownElement || !labelElement) {
+										return;
+									}
+
+									// Faltando menos de 5 min o aviso fica ambar; expirado, vermelho.
+									var WARNING_THRESHOLD = 5 * 60;
+									var states = {
+										normal: {border: '#c7c7c7', background: '#fff', color: '#333'},
+										warning: {border: '#f0a202', background: '#fff8e6', color: '#8a5a00'},
+										expired: {border: '#d32f2f', background: '#fdecea', color: '#b71c1c'}
+									};
+									var currentState = null;
+
+									function applyState(name) {
+										if (currentState === name) {
+											return;
+										}
+
+										currentState = name;
+										container.style.borderColor = states[name].border;
+										container.style.background = states[name].background;
+										container.style.color = states[name].color;
+									}
+
+									function renderCountdown() {
+										// renderIpagSuccessPayment() troca o #qr-info inteiro quando o pagamento confirma.
+										if (!document.body.contains(container)) {
+											clearInterval(interval);
+											return;
+										}
+
+										var remaining = Math.floor((expiresAt - Date.now()) / 1000);
+
+										if (remaining <= 0) {
+											labelElement.style.display = 'none';
+											countdownElement.textContent = expiredLabel;
+											applyState('expired');
+											clearInterval(interval);
+											return;
+										}
+
+										var minutes = Math.floor(remaining / 60);
+										var seconds = remaining % 60;
+										countdownElement.textContent = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+										applyState(remaining <= WARNING_THRESHOLD ? 'warning' : 'normal');
+									}
+
+									interval = setInterval(renderCountdown, 1000);
+									renderCountdown();
+								})();
+							</script>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<script>
-			var copyElement = document.getElementById("button-copy");
+			(function () {
+				var copyButton = document.getElementById('button-copy');
+				var codeElement = document.getElementById('pix-qrcode-code');
+				var icon = document.getElementById('pix-copy-icon');
 
-			copyElement.addEventListener('click', function() {
-				copyText = document.getElementById("brCode");
-				copyText.type = 'text';
-				copyText.select();
-				copyText.setSelectionRange(0, 99999);
-				document.execCommand("copy");
-				copyText.type = 'hidden';
-			});
+				if (!copyButton || !codeElement || !icon) {
+					return;
+				}
 
-			copyElement.addEventListener('click', function () {
-				copyElement.classList.add('copied-icon');
-				copyElement.innerHTML = 'Copiado';
-				setTimeout(function () {
-					copyElement.classList.remove('copied-icon');
-					copyElement.innerHTML = 'Copiar código do QR Code';
-				}, 1000);
-			});
+				var originalIconHtml = icon.innerHTML;
+
+				copyButton.addEventListener('click', function () {
+					window.navigator.clipboard.writeText(codeElement.textContent).then(function () {
+						icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+						icon.setAttribute('stroke', '#2e7d32');
+						setTimeout(function () {
+							icon.innerHTML = originalIconHtml;
+							icon.setAttribute('stroke', '#757575');
+						}, 1200);
+					});
+				});
+			})();
 		</script>
 		<script>
 			function renderIpagSuccessPayment() {

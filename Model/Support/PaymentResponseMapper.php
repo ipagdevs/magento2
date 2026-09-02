@@ -83,6 +83,7 @@ abstract class PaymentResponseMapper
         $pix = !$checkPixExists ? null : [
             'link' => ArrUtils::get($response, 'attributes.pix.link'),
             'qrCode' => ArrUtils::get($response, 'attributes.pix.qrcode'),
+            'expiresAt' => ArrUtils::get($response, 'attributes.pix.expires_at'),
         ];
 
         $splitRules = self::prepareSplitRulesFromResponse($response);

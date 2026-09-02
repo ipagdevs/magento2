@@ -18,6 +18,11 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
 
     const ROUND_UP = 100;
 
+    /**
+     * Expiração do QR Code Pix (em minutos) usada quando a config está vazia ou inválida.
+     */
+    protected const DEFAULT_PIX_EXPIRES_IN = 60;
+
     const IPAG_PAYMENT_STATUS = [
         1 =>	[
             'name' => 'CREATED',
@@ -617,6 +622,14 @@ abstract class AbstractData extends \Magento\Framework\App\Helper\AbstractHelper
         $instrucao1 = $this->_scopeConfig->getValue('payment/ipagboleto/expiration', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
 
         return $instrucao1;
+    }
+
+    public function getPixExpiresIn()
+    {
+        $expiresIn = (int) $this->_scopeConfig->getValue('payment/ipagpix/expires_in', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+
+        // Config vazia ou inválida não pode virar `pix_expires_in: 0` no payload.
+        return $expiresIn > 0 ? $expiresIn : self::DEFAULT_PIX_EXPIRES_IN;
     }
 
     public function getImgForBoleto()

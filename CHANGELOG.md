@@ -4,6 +4,12 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.7 - 2026-09-02
+- Exibe o tempo de expiração do QR Code Pix (horário e contador regressivo) na tela de sucesso do checkout, e o horário de expiração no painel Payment Information (admin e frontend).
+- Torna configurável o tempo de expiração enviado no pagamento Pix (`payment/ipagpix/expires_in`), mantendo o valor atual (60 minutos) como default.
+- Exibe o código do QR Code Pix na tela de sucesso em caixa copiável com feedback visual, no mesmo padrão da linha digitável do boleto.
+- Corrige as caixas do Pix e do boleto estourando a largura da tela no mobile (`box-sizing`).
+
 ## v2.0.6 - 2026-09-02
 - Repassa a mensagem de erro de validação (4xx) da API iPag para o cliente no checkout (boleto, pix e cartão v2), em vez da mensagem genérica "Payment service unavailable".
 

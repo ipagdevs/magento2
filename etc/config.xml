@@ -76,6 +76,7 @@
                 <active>1</active>
                 <order_status>pending</order_status>
                 <title>Pix</title>
+                <expires_in>60</expires_in>
             </ipagpix>
         </payment>
     </default>
