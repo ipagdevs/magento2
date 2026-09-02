@@ -13,19 +13,46 @@ else {
     }
 }
 ?>
+	<?php if (!empty($digitableLine)) : ?>
+		<p style="margin-bottom: 8px;"><strong><?php echo __('Linha digitável') ?></strong></p>
+		<div style="display: inline-flex; align-items: center; max-width: 100%; border: 1px solid #c7c7c7; border-radius: 10px; padding: 12px 10px 12px 18px; margin-bottom: 20px; background: #fff;">
+			<code id="boleto-digitable-code" style="font-family: monospace; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; color: #333; background: transparent; -webkit-user-select: all; -moz-user-select: all; user-select: all;"><?php echo $block->escapeHtml($digitableLine); ?></code>
+			<button type="button" id="button-copy-digitable-line" title="<?php echo __('Copiar linha digitável') ?>" style="background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; padding: 6px 10px; margin-left: 10px; flex-shrink: 0;">
+				<svg id="boleto-copy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<rect x="9" y="9" width="13" height="13" rx="2"></rect>
+					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+				</svg>
+			</button>
+		</div>
+		<script>
+			(function () {
+				var copyButton = document.getElementById('button-copy-digitable-line');
+				var codeElement = document.getElementById('boleto-digitable-code');
+				var icon = document.getElementById('boleto-copy-icon');
+
+				if (!copyButton || !codeElement || !icon) {
+					return;
+				}
+
+				var originalIconHtml = icon.innerHTML;
+
+				copyButton.addEventListener('click', function () {
+					window.navigator.clipboard.writeText(codeElement.textContent).then(function () {
+						icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+						icon.setAttribute('stroke', '#2e7d32');
+						setTimeout(function () {
+							icon.innerHTML = originalIconHtml;
+							icon.setAttribute('stroke', '#757575');
+						}, 1200);
+					});
+				});
+			})();
+		</script>
+	<?php endif; ?>
 	<p>
 		<a href="<?php echo $url; ?>" target="_blank" class="action primary btn-boleto boleto-ipag">
 			<span><?php echo __('Imprimir Boleto') ?></span>
 		</a>
-
-		<?php if (!empty($digitableLine)) : ?>
-			<button type="button" id="button-copy" class="action primary btn-boleto boleto-ipag"
-				data-digitableLine="<?php echo $digitableLine; ?>"
-				onclick="window.navigator.clipboard.writeText(this.getAttribute('data-digitableLine')) && alert('Código de barras copiado para a área de transferência');"
-			>
-				<span>Copiar código de barras</span>
-			</button>
-		<?php endif; ?>
 	</p>
 <?php endif; ?>
 <?php if($block->getMethodCode() === "ipagpix") :

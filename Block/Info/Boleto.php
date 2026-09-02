@@ -91,21 +91,10 @@ class Boleto extends \Magento\Payment\Block\Info
         return $this->getLinkPay();
     }
 
-    /*public function getLineCodeBoleto()
+    public function getDigitableLine()
     {
-    $_info = $this->getInfo();
-    $transactionId = $_info->getAdditionalInformation('line_code_boleto');
-
-    return $transactionId;
+        return $this->getInfo()->getAdditionalInformation('digitableLine');
     }
-
-    public function getExpirationDateBoleto()
-    {
-    $_info = $this->getInfo();
-    $transactionId = $_info->getAdditionalInformation('expiration_date_boleto');
-
-    return $transactionId;
-    }*/
 
     /**
      * Prepare bankslip related payment info

@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.5 - 2026-09-02
+- Exibe a linha digitável do boleto na tela de sucesso do checkout e no painel Payment Information (admin e "Meus Pedidos"), e corrige mistura de idiomas nesse painel.
+
 ## v2.0.4 - 2026-07-30
 - Trunca os campos de produto que excedem os limites de caracteres da API do iPag (SKU, nome e descrição), evitando que a transação seja rejeitada.
 

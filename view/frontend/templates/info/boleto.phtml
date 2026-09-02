@@ -13,6 +13,7 @@
 $specificInfo = $block->getSpecificInformation();
 $title = $block->escapeHtml($block->getMethod()->getTitle());
 $boletoUrl = $block->getLinkPrintPay();
+$digitableLine = $block->getDigitableLine();
 ?>
 <dl class="payment-method">
     <dt class="title"><?= /* @noEscape */ $title ?></dt>
@@ -29,12 +30,18 @@ $boletoUrl = $block->getLinkPrintPay();
                 </tr>
             <?php endforeach; ?>
         <?php endif;?>
+            <?php if ($digitableLine):?>
+                <tr>
+                    <th scope="row"><?= $block->escapeHtml(__('Linha digitável'))?></th>
+                    <td><code><?= $block->escapeHtml($digitableLine) ?></code></td>
+                </tr>
+            <?php endif;?>
             <?php if ($boletoUrl):?>
                 <tr>
                     <th scope="row"><?= $block->escapeHtml('Link')?></th>
                     <td>
                         <a href="<?php echo $boletoUrl; ?>" class="btn btn-link" target="_blank">
-                            Imprimir Boleto
+                            <?= /* @noEscape */ __('Imprimir Boleto') ?>
                         </a>
                     </td>
                 </tr>
