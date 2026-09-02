@@ -75,7 +75,7 @@ class Cc extends AbstractCc
         $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentCcException($json['errorMessage']);
+            throw (new IpagPaymentCcException($json['errorMessage']))->markSafeToDisplay();
         }
 
         return $json;
@@ -103,7 +103,7 @@ class Cc extends AbstractCc
         $this->logger->loginfo($json, self::class . ' CAPTURE RESPONSE JSON');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentCcException($json['errorMessage']);
+            throw (new IpagPaymentCcException($json['errorMessage']))->markSafeToDisplay();
         }
 
         return $json;

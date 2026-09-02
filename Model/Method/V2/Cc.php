@@ -97,11 +97,13 @@ class Cc extends AbstractCc
             return $maskedResponseData;
 
         } catch (HttpClientException $e) {
-            throw new IpagPaymentCcException(
-                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Cc transaction'),
-                0,
-                $e
-            );
+            $validationMessage = GatewayErrorUtils::extractClientErrorMessage($e);
+
+            if ($validationMessage !== null) {
+                throw (new IpagPaymentCcException($validationMessage, 0, $e))->markSafeToDisplay();
+            }
+
+            throw new IpagPaymentCcException('Error executing Cc transaction', 0, $e);
         } catch (\Throwable $th) {
             throw new IpagPaymentCcException('Error executing Cc transaction', 0, $th);
         }

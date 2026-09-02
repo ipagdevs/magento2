@@ -89,11 +89,13 @@ class Boleto extends AbstractBoleto
 
             return $maskedResponseData;
         } catch (HttpClientException $e) {
-            throw new IpagPaymentBoletoException(
-                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Boleto transaction'),
-                0,
-                $e
-            );
+            $validationMessage = GatewayErrorUtils::extractClientErrorMessage($e);
+
+            if ($validationMessage !== null) {
+                throw (new IpagPaymentBoletoException($validationMessage, 0, $e))->markSafeToDisplay();
+            }
+
+            throw new IpagPaymentBoletoException('Error executing Boleto transaction', 0, $e);
         } catch (\Throwable $th) {
             throw new IpagPaymentBoletoException('Error executing Boleto transaction', 0, $th);
         }

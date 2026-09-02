@@ -89,11 +89,13 @@ class Pix extends AbstractPix
 
             return $maskedResponseData;
         } catch (HttpClientException $e) {
-            throw new IpagPaymentPixException(
-                GatewayErrorUtils::extractClientErrorMessage($e, 'Error executing Pix transaction'),
-                0,
-                $e
-            );
+            $validationMessage = GatewayErrorUtils::extractClientErrorMessage($e);
+
+            if ($validationMessage !== null) {
+                throw (new IpagPaymentPixException($validationMessage, 0, $e))->markSafeToDisplay();
+            }
+
+            throw new IpagPaymentPixException('Error executing Pix transaction', 0, $e);
         } catch (\Throwable $th) {
             throw new IpagPaymentPixException('Error executing Pix transaction', 0, $th);
         }
