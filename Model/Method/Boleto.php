@@ -73,7 +73,7 @@ class Boleto extends AbstractBoleto
         $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentBoletoException($json['errorMessage']);
+            throw (new IpagPaymentBoletoException($json['errorMessage']))->markSafeToDisplay();
         }
 
         return $json;

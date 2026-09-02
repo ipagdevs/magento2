@@ -2,6 +2,7 @@
 namespace Ipag\Payment\Model\Method;
 
 use Ipag\Payment\Model\Support\MaskUtils;
+use Ipag\Payment\Exception\IpagPaymentPixException;
 
 class Pix extends AbstractPix
 {
@@ -72,7 +73,7 @@ class Pix extends AbstractPix
         $this->logger->loginfo($maskedResponseData, self::class . ' RESPONSE');
 
         if (array_key_exists('errorMessage', $json) && !empty($json['errorMessage'])) {
-            throw new IpagPaymentPixException($json['errorMessage']);
+            throw (new IpagPaymentPixException($json['errorMessage']))->markSafeToDisplay();
         }
 
         return $json;

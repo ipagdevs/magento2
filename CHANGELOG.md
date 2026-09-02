@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.6 - 2026-09-02
+- Repassa a mensagem de erro de validação (4xx) da API iPag para o cliente no checkout (boleto, pix e cartão v2), em vez da mensagem genérica "Payment service unavailable".
+
 ## v2.0.5 - 2026-09-02
 - Exibe a linha digitável do boleto na tela de sucesso do checkout e no painel Payment Information (admin e "Meus Pedidos"), e corrige mistura de idiomas nesse painel.
 
