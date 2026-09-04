@@ -6,6 +6,12 @@
                 <value id="mercadopago-api" type="host">https://api.mercadopago.com</value>
                 <value id="mercadolibre" type="host">https://www.mercadolibre.com</value>
                 <value id="ipag" type="host">https://www.ipag.com.br</value>
+                <!--
+                    O cliente socket.io abre HTTP long-polling antes de fazer upgrade para
+                    websocket, então as duas origens são necessárias: só a wss:// não conecta.
+                -->
+                <value id="ipag-websocket" type="host">https://websocket.ipag.com.br</value>
+                <value id="ipag-websocket-wss" type="host">wss://websocket.ipag.com.br</value>
             </values>
         </policy>
         <policy id="script-src">
