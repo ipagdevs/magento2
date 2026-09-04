@@ -207,16 +207,131 @@ else {
 				`);
 			}
 		</script>
+		<script>
+			/**
+			 * Confirmação do pagamento pelo backend.
+			 *
+			 * O websocket não serve como fonte da verdade: o servidor emite uma string
+			 * ("pix <uuid> updated."), não um objeto com status. Quem afirma que o Pix
+			 * entrou é o Magento, em /ipag/pix/status. O evento do socket vira só um
+			 * gatilho para perguntar mais cedo, e o poll é a rede de segurança para
+			 * quando o socket estiver bloqueado ou indisponível.
+			 *
+			 * Quem decide que expirou é o servidor, na resposta `expired`. A aba não
+			 * consulta o próprio relógio para parar: relógio adiantado encerraria o poll
+			 * antes da hora e a confirmação nunca apareceria, mesmo com o pagamento
+			 * entrando. O limite de tentativas abaixo é o que garante que o poll termina,
+			 * e não depende de relógio nenhum.
+			 */
+			(function () {
+				// Sem fetch não há como consultar: degrada para o comportamento anterior
+				// (só websocket) em vez de instalar um poll que morre calado na primeira
+				// tentativa. O `typeof` no handler do socket cobre o gatilho.
+				if (typeof window.fetch !== 'function') {
+					return;
+				}
+
+				var statusUrl = '<?= $block->escapeJs($block->getUrl('ipag/pix/status')) ?>';
+
+				var POLL_INTERVAL = 15000;
+				var MAX_CONSECUTIVE_ERRORS = 5;
+
+				// Teto de tempo do poll: 75 minutos, com margem sobre a expiração default
+				// do Pix (60). Existe para a aba esquecida aberta em pedido sem
+				// `pix.expiresAt` gravado, em que o servidor nunca responde `expired`.
+				var MAX_POLLS = 300;
+
+				var timer = null;
+				var inFlight = false;
+				var pendingRecheck = false;
+				var stopped = false;
+				var errorCount = 0;
+				var pollCount = 0;
+
+				function stop() {
+					stopped = true;
+
+					if (timer) {
+						clearInterval(timer);
+						timer = null;
+					}
+				}
+
+				function checkStatus() {
+					if (stopped) {
+						return;
+					}
+
+					// Evita requests sobrepostos: o gatilho do socket pode cair junto do poll.
+					if (inFlight) {
+						pendingRecheck = true;
+						return;
+					}
+
+					if (pollCount >= MAX_POLLS) {
+						stop();
+						return;
+					}
+
+					pollCount++;
+					inFlight = true;
+
+					window.fetch(statusUrl, {
+						credentials: 'same-origin',
+						headers: {'Accept': 'application/json'}
+					}).then(function (response) {
+						if (!response.ok) {
+							throw new Error('HTTP ' + response.status);
+						}
+
+						return response.json();
+					}).then(function (data) {
+						errorCount = 0;
+
+						if (data && data.paid) {
+							stop();
+							renderIpagSuccessPayment();
+							return;
+						}
+
+						if (data && data.expired) {
+							stop();
+						}
+					}).catch(function () {
+						errorCount++;
+
+						// Erro persistente (endpoint fora, rede caída) não vira poll infinito.
+						if (errorCount >= MAX_CONSECUTIVE_ERRORS) {
+							stop();
+						}
+					}).then(function () {
+						inFlight = false;
+
+						if (pendingRecheck) {
+							pendingRecheck = false;
+							checkStatus();
+						}
+					});
+				}
+
+				timer = setInterval(checkStatus, POLL_INTERVAL);
+
+				// Cobre o reload da tela depois do pagamento já ter entrado.
+				checkStatus();
+
+				window.ipagPixConfirmWithBackend = checkStatus;
+			})();
+		</script>
 		<script type="module">
 			import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
 
 			const socket = io("wss://websocket.ipag.com.br");
-			const token = "<?= $transUuid ?>";
+			const token = "<?= $block->escapeJs($transUuid) ?>";
 
 			if (token) {
-				socket.on(token, function(data) {
-					if (data.status == 200) {
-						renderIpagSuccessPayment();
+				socket.on(token, function () {
+					if (typeof window.ipagPixConfirmWithBackend === 'function') {
+						window.ipagPixConfirmWithBackend();
 					}
 				});
 			}

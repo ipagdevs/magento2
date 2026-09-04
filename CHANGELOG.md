@@ -4,6 +4,10 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.8 - 2026-09-04
+- Corrige a confirmação do pagamento Pix na tela de sucesso, que nunca funcionou: o evento de websocket passa a ser apenas um gatilho e a confirmação vem de uma consulta ao backend (`/ipag/pix/status`), com poll de segurança para quando o websocket estiver indisponível.
+- Adiciona `wss://websocket.ipag.com.br` e `https://websocket.ipag.com.br` ao `connect-src` do CSP, necessários para o cliente socket.io conectar em lojas com CSP em modo restrict.
+
 ## v2.0.7 - 2026-09-02
 - Exibe o tempo de expiração do QR Code Pix (horário e contador regressivo) na tela de sucesso do checkout, e o horário de expiração no painel Payment Information (admin e frontend).
 - Torna configurável o tempo de expiração enviado no pagamento Pix (`payment/ipagpix/expires_in`), mantendo o valor atual (60 minutos) como default.
