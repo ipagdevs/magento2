@@ -4,6 +4,13 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.1.0 - 2026-09-04
+- Unifica o desfecho do fluxo de redirecionamento com as telas padrão do checkout: o pagamento aprovado passa a terminar em `checkout/onepage/success` (com número do pedido e os painéis de QR Code do Pix e linha digitável do boleto, como nos demais métodos) e o não confirmado em `checkout/onepage/failure`, em vez de duas páginas próprias do módulo que não mostravam o pedido nem seguiam o tema da loja.
+- Remove o fluxo paralelo que deixou de ser usado: os templates `order/redirect/success.phtml` e `order/redirect/error.phtml`, os layouts `ipag_redirect_success.xml` e `ipag_redirect_error.xml` e a injeção de `PageFactory` no controller.
+- Remove o código morto do `Controller/Redirect/Result`, sobra do tempo em que ele criava invoice sozinho: dez dependências injetadas e nunca lidas, um método sem chamadas, um import não usado e um comentário de compatibilidade que descrevia um bloco já removido. O construtor sai de 18 para 7 dependências — quem estende o controller por fora precisa ajustar a assinatura.
+- O fluxo de redirecionamento passa a disparar o evento `checkout_onepage_controller_success_action`, que a página própria não disparava: extensões de analytics passam a trackear essas compras.
+- Corrige a tela de falha do checkout, que sempre caía no texto genérico de fallback: o Magento não marca o bloco `checkout.failure` como não-cacheável (só o `checkout.success`), então com o cache de página cheia ligado a sessão de checkout era limpa antes do render e a tela perdia o número do pedido e a mensagem de erro. Afetava também o pagamento com cartão negado.
+
 ## v2.0.8 - 2026-09-04
 - Corrige a confirmação do pagamento Pix na tela de sucesso, que nunca funcionou: o evento de websocket passa a ser apenas um gatilho e a confirmação vem de uma consulta ao backend (`/ipag/pix/status`), com poll de segurança para quando o websocket estiver indisponível.
 - Adiciona `wss://websocket.ipag.com.br` e `https://websocket.ipag.com.br` ao `connect-src` do CSP, necessários para o cliente socket.io conectar em lojas com CSP em modo restrict.

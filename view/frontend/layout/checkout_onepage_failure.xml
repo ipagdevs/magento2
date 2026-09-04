@@ -10,9 +10,17 @@
             </action>
         </referenceBlock>
         <referenceBlock name="checkout.failure" template="Ipag_Payment::order/failure.phtml">
+            <!--
+                cacheable="false" torna a página inteira não-cacheável, e é isso que importa aqui:
+                o core não marca o checkout.failure como cacheable="false" (marca só o
+                checkout.success), então com o FPC ligado o DepersonalizePlugin limpa a sessão de
+                checkout antes do render e o failure.phtml perde o número do pedido e a mensagem de
+                erro, caindo sempre no texto de fallback.
+            -->
             <block class="Ipag\Payment\Block\Failure"
                    name="ipag.order.failure"
                    as="ipag_order_failure"
+                   cacheable="false"
                    template="Ipag_Payment::order/failure/additional.phtml"/>
         </referenceBlock>
     </body>
