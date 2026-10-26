@@ -159,6 +159,8 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
             );
 
             if ($paymentStatus !== null && in_array($paymentStatus, ['5', '8'])) {
+                $this->syncPaymentInformation($ipagHelper, $order, $response);
+
                 return $this->redirectToCheckoutSuccess($order);
             }
 
@@ -227,6 +229,37 @@ class Result extends \Magento\Framework\App\Action\Action implements CsrfAwareAc
     public function validateForCsrf(RequestInterface $request): ?bool
     {
         return true;
+    }
+
+    /**
+     * Grava a resposta da consulta nas informações do pagamento antes de ir à tela de sucesso.
+     *
+     * O Block\Success decide o destino lendo o `payment.status` gravado no pedido, que só é
+     * atualizado quando o callback é processado — e o callback chega alguns segundos depois do
+     * retorno do navegador. Sem esta gravação o pedido ainda tem status 4 e `urlAuthentication`
+     * preenchida, e a tela de sucesso devolve o cliente à autenticação 3DS já concluída.
+     *
+     * Só as informações do pagamento são atualizadas: o status do pedido e a fatura continuam
+     * por conta do callback. Falha aqui não impede o cliente de chegar à tela de sucesso.
+     *
+     * @param \Ipag\Payment\Helper\AbstractData $ipagHelper
+     * @param \Magento\Sales\Model\Order $order
+     * @param array $response
+     * @return void
+     */
+    private function syncPaymentInformation($ipagHelper, $order, array $response)
+    {
+        try {
+            $payment = $order->getPayment();
+
+            $ipagHelper->registerAdditionalInfoTransactionData($response, $payment);
+            $payment->save();
+        } catch (\Exception $e) {
+            $this->_logger->warning(
+                'Could not sync payment information before the checkout success page',
+                ['order' => $order->getIncrementId(), 'error' => $e->getMessage()]
+            );
+        }
     }
 
     /**
