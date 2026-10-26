@@ -4,6 +4,9 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), e este projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
+## v2.1.1 - 2026-10-26
+- Corrige o retorno do 3DS para a autenticação já concluída, em vez da tela de sucesso do checkout: o `Redirect\Result` consultava o status ao vivo, mas a tela de sucesso lia o `payment.status` gravado no pedido, que só é atualizado quando o callback é processado (alguns segundos depois). Com o pedido ainda em status 4 e `urlAuthentication` preenchida, o cliente era mandado de novo à URL de autenticação e caía numa página de erro da adquirente. Agora, ao ver o pagamento aprovado (status 5 ou 8), o `Redirect\Result` grava a resposta nas informações do pagamento antes de redirecionar. O status do pedido e a fatura seguem por conta do callback.
+
 ## v2.1.0 - 2026-09-08
 - Unifica o desfecho do fluxo de redirecionamento com as telas padrão do checkout: o pagamento aprovado passa a terminar em `checkout/onepage/success` (com número do pedido e os painéis de QR Code do Pix e linha digitável do boleto, como nos demais métodos) e o não confirmado em `checkout/onepage/failure`, em vez de duas páginas próprias do módulo que não mostravam o pedido nem seguiam o tema da loja.
 - Remove o fluxo paralelo que deixou de ser usado: os templates `order/redirect/success.phtml` e `order/redirect/error.phtml`, os layouts `ipag_redirect_success.xml` e `ipag_redirect_error.xml` e a injeção de `PageFactory` no controller.
